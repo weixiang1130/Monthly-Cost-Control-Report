@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>Monthly Cost Report — Prototype</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="banner">
+  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.2 ｜ Generic sample data ｜ Save is simulated</span></div>
+  <div class="banner-meta">
+    <span>Data: <code>local mock JSON</code></span>
+    <span>Read: <span class="ok">✓ OK</span></span>
+    <span>Write: <span class="warn">⏳ Simulated UPSERT to MonthlyReportDesc</span></span>
+  </div>
+</header>
+
+<div class="topbar">
+  <span class="date" id="reportDate">—</span>
+  <span class="pid" id="pid">—</span>
+  <div class="projsel">
+    <input id="projname" readonly>
+    <span class="chev">▾</span>
+    <div class="projmenu" id="projmenu"></div>
+  </div>
+  <div class="monthsel">
+    <span class="lbl">Month:</span>
+    <select id="monthsel"></select>
+  </div>
+  <span id="globalDirty" class="clean">✓ All saved</span>
+  <div class="acckpi"><span class="lbl">Cumulative cost:</span><span class="val" id="kpiAccCostRate">—</span></div>
+</div>
+
+<div class="row dates">
+  <div class="cell"><span class="l">Expected start</span><span class="v" id="expStartDate">—</span></div>
+  <div class="cell"><span class="l">Expected end</span><span class="v" id="expEndDate">—</span></div>
+  <div class="cell"><span class="l">Extended end</span><span class="v" id="extEndDate">—</span></div>
+</div>
+<div class="row">
+  <div class="cell"><span class="l">Contract amount</span><span class="v" id="contractAmt">—</span></div>
+  <div class="cell"><span class="l">Budget</span><span class="v" id="budgetAmt">—</span></div>
+  <div class="cell"><span class="l">Profit rate <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="origProfitRate">—</span></div>
+</div>
+<div class="row">
+  <div class="cell"><span class="l">Revised contract</span><span class="v" id="contractRevisedAmt">—</span></div>
+  <div class="cell"><span class="l">Revised budget</span><span class="v" id="budgetRevisedAmt">—</span></div>
+  <div class="cell"><span class="l">Revised profit rate <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="revProfitRate">—</span></div>
+</div>
+<div class="row">
+  <div class="cell">
+    <span class="l">Cumulative income <i class="calc-mark" title="Prev month AccRealAmt + this month TargetAmount">∑</i></span>
+    <span class="v calc" id="accRealAmtCalc">—</span>
+  </div>
+  <div class="cell"><span class="l">Cumulative cost</span><span class="v" id="accRealCost">—</span></div>
+  <div class="cell"><span class="l">Cumulative diff <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="accRealDiff">—</span></div>
+</div>
+<div class="row">
+  <div class="cell"><span class="l">YTD planned cost</span><span class="v" id="yearEstCost">—</span></div>
+  <div class="cell"><span class="l">YTD actual cost</span><span class="v" id="yearRealCost">—</span></div>
+  <div class="cell"><span class="l">YTD cost diff <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="yearCostDiff">—</span></div>
+</div>
+<div class="row">
+  <div class="cell"><span class="l">Monthly planned cost</span><span class="v" id="estCost">—</span></div>
+  <div class="cell"><span class="l">Monthly actual cost</span><span class="v" id="realCost">—</span></div>
+  <div class="cell"><span class="l">Monthly rate</span><span class="v" id="monthAchieve">—</span></div>
+</div>
+
+<!-- Editable 1: monthly income target -->
+<div class="section-title">Monthly income (editable):<span class="edit-tag">editable</span></div>
+<div class="editable-block compact">
+  <div class="income-row">
+    <span class="l">This month income:</span>
+    <input id="targetAmount" type="number" placeholder="integer amount">
+    <span class="unit"></span>
+    <span class="hint">→ <code>MonthlyReportDesc.TargetAmount</code></span>
+    <span id="dirtyTarget" class="field-dirty" style="display:none">⚠ unsaved</span>
+    <button class="save save-mini" id="saveTarget">💾 Save income</button>
+  </div>
+</div>
+
+<!-- Editable 2: notes -->
+<div class="section-title">Cost / income notes (editable):<span class="edit-tag">editable</span></div>
+<div class="editable-block">
+  <div class="rt">
+    <div class="rt-tool">
+      <select class="rt-sel" disabled><option>Normal</option></select>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="bold" title="Bold"><b>B</b></button>
+      <button class="tb" data-cmd="italic" title="Italic"><i>I</i></button>
+      <button class="tb" data-cmd="underline" title="Underline"><u>U</u></button>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="createLink" data-prompt="1" title="Link">🔗</button>
+      <button class="tb" data-cmd="unlink" title="Unlink">🔗⃠</button>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="removeFormat" title="Clear format">Tₓ</button>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="insertUnorderedList" title="Bullet list">•≡</button>
+      <button class="tb" data-cmd="insertOrderedList" title="Numbered list">1≡</button>
+    </div>
+    <div id="amtDesc" class="rt-body" contenteditable="true" data-field="AmtDesc"></div>
+  </div>
+  <div class="block-footer">
+    <span class="rt-hint">→ <code>MonthlyReportDesc.AmtDesc</code> (nvarchar(MAX), HTML)</span>
+    <span id="dirtyAmt" class="field-dirty" style="display:none">⚠ unsaved</span>
+    <button class="save" id="saveAmt">💾 Save notes</button>
+  </div>
+</div>
+
+<!-- Read-only: payments -->
+<div class="section-title">Project payments:</div>
+<div class="paykpi">
+  <div class="cell"><span class="l">Paid count:</span><span class="v" id="payCount">0</span></div>
+  <div class="cell"><span class="l">Paid ratio:</span><span class="v" id="payRatio">0.00 %</span></div>
+  <div class="cell"><span class="l">Paid amount:</span><span class="v" id="payAmount">—</span></div>
+  <div class="cell"><span class="l">Paid amount ratio:</span><span class="v" id="payAmountRatio">0.00 %</span></div>
+</div>
+<div class="paytbl">
+  <table>
+    <colgroup><col style="width:8%"><col style="width:28%"><col style="width:22%"><col style="width:12%"><col style="width:8%"><col style="width:12%"><col style="width:10%"></colgroup>
+    <thead><tr><th>Paid</th><th>Contract</th><th>Vendor</th><th class="r">Amount</th><th>Phase</th><th>Date</th><th>Status</th></tr></thead>
+    <tbody id="payRows"></tbody>
+  </table>
+</div>
+
+<!-- Editable 3: warnings & actions -->
+<div class="section-title">Warnings & actions (editable):<span class="edit-tag">editable</span></div>
+<div class="editable-block">
+  <div class="rt">
+    <div class="rt-tool">
+      <select class="rt-sel" disabled><option>Format</option></select>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="bold"><b>B</b></button>
+      <button class="tb" data-cmd="italic"><i>I</i></button>
+      <button class="tb" data-cmd="underline"><u>U</u></button>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="createLink" data-prompt="1">🔗</button>
+      <button class="tb" data-cmd="unlink">🔗⃠</button>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="removeFormat">Tₓ</button>
+      <span class="sep"></span>
+      <button class="tb" data-cmd="insertUnorderedList">•≡</button>
+      <button class="tb" data-cmd="insertOrderedList">1≡</button>
+    </div>
+    <div id="solDesc" class="rt-body" contenteditable="true" data-field="SolDesc"></div>
+  </div>
+  <div class="block-footer">
+    <span class="rt-hint">→ <code>MonthlyReportDesc.SolDesc</code> (nvarchar(MAX), HTML)</span>
+    <span id="dirtySol" class="field-dirty" style="display:none">⚠ unsaved</span>
+    <button class="save" id="saveSol">💾 Save warnings</button>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="meta">User: <span id="userMeta">demo_user</span>　｜　Write target: <code>MonthlyReportDesc</code> (simulated)　｜　Last saved: <span id="lasttime">never</span></span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<aside class="devpanel" id="devpanel">
+  <div class="devpanel-h">📌 Dev panel (click to toggle)</div>
+  <div class="devpanel-b" id="devInfo"></div>
+</aside>
+
+<script src="mock-data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

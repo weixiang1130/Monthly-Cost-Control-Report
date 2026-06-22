@@ -1,0 +1,36 @@
+# --- 嚴格防止把任何敏感資料推上去 ---
+
+# 公司 OneDrive / 內部資料(防呆)
+**/OneDrive*/
+**/冠德*/
+
+# 任何含有真實連線資訊的檔案
+*.sqlcreds*
+.env*
+*.local
+*credentials*
+*secret*
+appsettings.Production.json
+appsettings.Development.json
+
+# 真實資料快照(如果不小心被複製進來)
+mock-data-real.*
+raw-data-*.xlsx
+*RawData*
+
+# 內部文件(Word/Excel)
+*.docx
+*.xlsx
+
+# Build / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+.vscode/
+.idea/
+
+# Future Blazor build artifacts
+bin/
+obj/
+*.user
