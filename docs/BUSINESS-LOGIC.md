@@ -1,47 +1,47 @@
-# Business logic
+# 商業邏輯
 
-## Cumulative income (the critical rule)
+## 累計實際收入(關鍵規則)
 
-The cumulative income shown on screen is **not** read directly from the database — it is computed in the application layer:
+畫面上顯示的「累計實際收入」**不是**從資料庫直接讀取,而是在應用層即時計算:
 
 ```
-cumulative_income_displayed
-    = previous_month.AccRealAmt        (read from ProjectMonthlySummary)
-    + this_month.TargetAmount           (user input, stored in MonthlyReportDesc)
+畫面顯示的累計實際收入
+    = 上月的 AccRealAmt        (從 ProjectMonthlySummary 讀取)
+    + 本月的 TargetAmount       (使用者輸入,儲存於 MonthlyReportDesc)
 ```
 
-This means:
+意思是:
 
-- The user enters a single value (`TargetAmount`) for the current month.
-- The displayed cumulative figure updates live as that value is edited.
-- On save, only `TargetAmount` is written; the cumulative figure is **never persisted** as a column — it is always recomputed on read.
+- 使用者只填一個值(`TargetAmount`)代表本月。
+- 顯示的累計值會隨使用者輸入即時重算。
+- 儲存時只寫 `TargetAmount`;累計值**永遠不存成欄位**,每次讀取都重新計算。
 
-## Derived figures
+## 衍生計算欄位
 
-| Field | Formula |
+| 欄位 | 公式 |
 |---|---|
-| Profit rate (original) | `(ContractAmt − BudgetAmt) / ContractAmt` |
-| Profit rate (revised) | `(RevisedContractAmt − RevisedBudgetAmt) / RevisedContractAmt` |
-| Cumulative diff | `cumulative_income_displayed − AccRealCost` |
-| YTD cost diff | `YearEstCost − YearRealCost` |
-| Paid ratio | `count(paid) / count(billed)` |
-| Paid amount ratio | `sum(paid.Amount) / sum(billed.Amount)` |
+| 原始利潤率 | `(ContractAmt − BudgetAmt) / ContractAmt` |
+| 修正利潤率 | `(RevisedContractAmt − RevisedBudgetAmt) / RevisedContractAmt` |
+| 累計收支差 | `畫面顯示的累計實際收入 − AccRealCost` |
+| 年度投入差 | `YearEstCost − YearRealCost` |
+| 付款比例 | `count(已付款) / count(已計價)` |
+| 付款金額比例 | `sum(已付款.Amount) / sum(已計價.Amount)` |
 
-## State machine
+## 狀態機
 
 ```
-[Editable]  → user fills in fields, saves any time
-    ↓ (admin runs month-close)
-[Locked]    → entire month becomes read-only
-    ↓ (admin unlocks for exception handling)
-[Unlocked]  → editable again
+[可編輯]  → 使用者填寫欄位,隨時可存檔
+    ↓ (管理員執行月結)
+[月結鎖定] → 整個月份變唯讀
+    ↓ (管理員解鎖,例外處理)
+[解鎖]    → 重新可編輯
 ```
 
-There is no approval step. The locking model is enforced server-side; the prototype shows the visual states only.
+沒有審核流程。鎖定機制由伺服器強制執行;原型只呈現視覺狀態。
 
-## Roles
+## 角色
 
-| Role | Permissions |
+| 角色 | 權限 |
 |---|---|
-| Editor | Edit assigned projects, current month only |
-| Admin | View all, lock/unlock months, manage permissions |
+| 填報人 Editor | 編輯自己負責的專案、僅當月 |
+| 管理員 Admin | 全部專案檢視、執行月結/解鎖、權限管理 |

@@ -1,20 +1,20 @@
-# Roadmap
+# 開發路線圖
 
-Eight-phase plan. Phases run sequentially with a strict gate: do not enter the next phase without explicit confirmation that the current phase's "definition of done" is met.
+8 個階段循序漸進。各階段間有嚴格的閘門:**未經明確確認前一階段的「完成定義」已達成,不得進入下一階段。**
 
-| Phase | Goal | Status |
+| Phase | 目標 | 狀態 |
 |---|---|:--:|
-| 0 | Discovery, data inventory, legacy app field mapping | ✅ Done |
-| 1 | Backend data contract (read & write API, auth, schemas) | ◐ In progress |
-| 2 | Frontend data model (types, field map, validators, mock layer) | ⏳ |
-| 3 | App scaffold (Blazor Server, EF Core, UI library) | ⏳ Blocked on local .NET SDK |
-| 4 | UI implementation (this prototype is the visual target) | ⏳ |
-| 5 | Real DB integration (read + write, auth, role-based filtering) | ⏳ |
-| 6 | Testing & legacy data migration | ⏳ |
-| 7 | Internal deployment | ⏳ |
+| 0 | 需求釐清、資料盤點、既有系統欄位對照 | ✅ 完成 |
+| 1 | 後端資料合約(讀寫 API、認證、schema) | ◐ 進行中 |
+| 2 | 前端資料模型(型別、欄位對照、驗證器、Mock 層) | ⏳ 待辦 |
+| 3 | 應用骨架(Blazor Server、EF Core、UI 元件庫) | ⏳ 卡在本機 .NET SDK |
+| 4 | UI 實作(本原型即為視覺目標) | ⏳ 待辦 |
+| 5 | 真實 DB 介接(讀+寫、認證、列級權限) | ⏳ 待辦 |
+| 6 | 測試與歷史資料遷移 | ⏳ 待辦 |
+| 7 | 內網部署 | ⏳ 待辦 |
 
-## Gates
+## 階段閘門
 
-- Phase advancement requires a written checklist confirming the previous phase's deliverables, reviewed with the project owner.
-- Read paths can proceed in parallel with write paths if the write schema is still being defined.
-- Migration of legacy data is a one-time job blocked on the write schema being finalised.
+- 階段推進需要書面 checklist,確認前一階段所有交付物完成,並與專案負責人 review。
+- 若寫入端 schema 仍在定義中,讀取路徑可平行進行。
+- 既有資料遷移為一次性工作,卡在寫入端 schema 定稿後才能進行。

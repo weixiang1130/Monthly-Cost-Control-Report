@@ -1,122 +1,122 @@
-# Tech Stack
+# 技術棧
 
-Two stacks: the **current prototype** (what's in this repo) and the **production target** (what will be built once the backend is ready).
+兩套技術棧:**當前原型**(本 repo 內容)與 **目標正式版**(後端就緒後將建置的版本)。
 
 ---
 
-## Current — Prototype (v0.2)
+## 當前 — 原型 (v0.2)
 
-A deliberately minimal stack so the prototype runs anywhere with zero setup.
+刻意採用最精簡的技術棧,讓原型零安裝、任何地方都能跑。
 
-| Layer | Tech | Why |
+| 層 | 技術 | 為什麼 |
 |---|---|---|
-| Markup | HTML5 | Direct, no framework |
-| Styling | CSS3 (vanilla) | Form-style layout, flat aesthetic, no preprocessor |
-| Logic | Vanilla JavaScript (ES2017+) | No build step, no `node_modules`, no transpiler |
-| State | Plain JS object | Right-size for a single-page prototype |
-| Rich text | `contenteditable` + `document.execCommand` | Built into the browser; matches the legacy app's behavior |
-| Data | Embedded `mock-data.js` (synthetic) | Avoids `fetch()` CORS issues on `file://` |
-| Run | Open `index.html` in browser | No server, no build, no install |
+| 標記 | HTML5 | 直接、不靠框架 |
+| 樣式 | CSS3(原生) | 表單版面、扁平美學、不用前處理器 |
+| 邏輯 | 原生 JavaScript (ES2017+) | 無建置、無 `node_modules`、無轉譯 |
+| 狀態 | 純 JS 物件 | 對單頁原型來說剛好夠用 |
+| 富文本 | `contenteditable` + `document.execCommand` | 瀏覽器內建;符合既有系統行為 |
+| 資料 | 內嵌的 `mock-data.js`(合成資料) | 避免 `file://` 環境下的 `fetch()` CORS 問題 |
+| 執行 | 直接用瀏覽器打開 `index.html` | 不需要伺服器、不需要安裝任何東西 |
 
-**What it intentionally does NOT have:**
-- No framework (React/Vue/Angular)
-- No bundler (Vite/Webpack)
-- No package manager (npm/yarn)
-- No build step
-- No real network calls
+**刻意沒有的東西:**
+- 沒有框架(React/Vue/Angular)
+- 沒有打包工具(Vite/Webpack)
+- 沒有套件管理(npm/yarn)
+- 沒有建置步驟
+- 沒有真實網路呼叫
 
-This is a **visual + interaction reference**, not a production codebase.
+這是**視覺與互動的參考實作**,不是正式產品的程式碼。
 
-### Browser features used
+### 用到的瀏覽器特性
 
-| Feature | Used for |
+| 特性 | 用途 |
 |---|---|
-| `contenteditable` | Rich text fields |
-| `document.execCommand` | Bold/italic/list/link in toolbars |
-| `Intl.NumberFormat` (via `toLocaleString`) | Number formatting |
-| `localStorage` | _not yet used; could persist drafts_ |
+| `contenteditable` | 富文本欄位 |
+| `document.execCommand` | 粗體/斜體/清單/連結 工具列 |
+| `Intl.NumberFormat`(透過 `toLocaleString`) | 數字格式化 |
+| `localStorage` | _尚未使用;可用於保存草稿_ |
 
 ---
 
-## Target — Production (Phase 3 onward)
+## 目標 — 正式版(Phase 3 起)
 
-Microsoft-aligned end-to-end stack chosen for:
-- Single language across UI + backend (C#)
-- Native integration with corporate Windows / Azure AD
-- No JavaScript build toolchain
-- Server-side rendering + SignalR for reactivity
+選擇與微軟生態對齊的全套技術,理由是:
+- UI + 後端 採用同一語言(C#)
+- 原生整合公司 Windows / Azure AD
+- 無 JavaScript 建置工具鏈
+- 伺服器端渲染 + SignalR 提供反應式互動
 
-### Application
+### 應用層
 
-| Layer | Tech | Version | Notes |
+| 層 | 技術 | 版本 | 備註 |
 |---|---|---|---|
-| Runtime | .NET | 8 LTS | Long-term support until Nov 2026 |
-| App framework | ASP.NET Core | 8 | Hosts Blazor Server |
-| UI framework | Blazor Server | 8 | Component model in C# (.razor) |
-| Component library | MudBlazor (primary) or FluentUI Blazor | latest | Material-style or Fluent-style components |
-| Rich text | TinyMCE Blazor or Syncfusion Blazor RTE | latest | Replaces `contenteditable` with a managed editor |
-| HTML sanitization | `HtmlSanitizer` NuGet | latest | Server-side whitelist of safe tags |
-| Auth | Negotiate (Windows Auth) or `Microsoft.Identity.Web` | 2.x | Driven by IT preference |
-| Logging | Serilog + Console / File sinks | latest | Per-request correlation IDs |
+| Runtime | .NET | 8 LTS | 長期支援至 2026 年 11 月 |
+| 應用框架 | ASP.NET Core | 8 | 承載 Blazor Server |
+| UI 框架 | Blazor Server | 8 | 用 C# 寫元件(.razor) |
+| 元件庫 | MudBlazor(優先)或 FluentUI Blazor | 最新 | Material 或 Fluent 風格元件 |
+| 富文本 | TinyMCE Blazor 或 Syncfusion Blazor RTE | 最新 | 取代 `contenteditable`,改用受控元件 |
+| HTML 清洗 | `HtmlSanitizer` NuGet | 最新 | 伺服器端白名單 |
+| 認證 | Negotiate(Windows Auth)或 `Microsoft.Identity.Web` | 2.x | 依 IT 偏好決定 |
+| 記錄 | Serilog + Console / File sinks | 最新 | 每個 request 帶 correlation ID |
 
-### Data Access
+### 資料存取
 
-| Layer | Tech | Notes |
+| 層 | 技術 | 備註 |
 |---|---|---|
-| ORM | EF Core 8 | For read models (LINQ over views) |
-| Micro-ORM | Dapper | For high-throughput writes and ad-hoc SQL |
-| Driver | Microsoft.Data.SqlClient | Modern ADO.NET driver |
+| ORM | EF Core 8 | 讀取模型(LINQ over views) |
+| Micro-ORM | Dapper | 高吞吐寫入與臨時 SQL |
+| 驅動 | Microsoft.Data.SqlClient | 新版 ADO.NET driver |
 
-### Database
+### 資料庫
 
-| Layer | Tech | Notes |
+| 層 | 技術 | 備註 |
 |---|---|---|
-| Engine | SQL Server | 2022 (or whatever IT provides) |
-| Schema | 3 read views + 1 write table | See ARCHITECTURE.md |
+| 引擎 | SQL Server | 2022(依 IT 提供) |
+| Schema | 3 個讀 view + 1 個寫 table | 詳見 ARCHITECTURE.md |
 
-### Tooling
+### 開發工具
 
-| Tool | Use |
+| 工具 | 用途 |
 |---|---|
-| Visual Studio 2022 or VS Code + C# Dev Kit | IDE |
-| dotnet CLI | Build, restore, run |
-| `dotnet user-secrets` | Local connection string storage (never committed) |
-| Git | Version control |
+| Visual Studio 2022 或 VS Code + C# Dev Kit | IDE |
+| dotnet CLI | 建置、還原、執行 |
+| `dotnet user-secrets` | 本機連線字串儲存(永不 commit) |
+| Git | 版本控制 |
 
-### Deployment
+### 部署
 
-| Layer | Tech | Notes |
+| 層 | 技術 | 備註 |
 |---|---|---|
-| Hosting | IIS on Windows Server (intranet) | Kestrel optional |
-| Process | In-process (IIS) | Single deployment unit |
-| Reverse proxy | IIS or none | Depends on IT's stack |
+| 主機 | Windows Server 內網的 IIS | Kestrel 可選 |
+| 程序 | In-process(IIS) | 單一部署單位 |
+| 反向代理 | IIS 或無 | 依 IT 既有架構決定 |
 
 ---
 
-## Why this stack — design constraints addressed
+## 為何選這套 — 對應的設計限制
 
-| Constraint | Stack response |
+| 限制 | 技術棧如何對應 |
 |---|---|
-| No `node.js` allowed locally (corporate IT policy) | Blazor Server has zero JavaScript build chain |
-| Existing Microsoft shop (SQL Server, AD, Windows servers) | C# / EF Core / Windows Auth all native |
-| Internal application, intranet only | SignalR latency acceptable; no public hardening needed |
-| Single small team must maintain after handover | One language end-to-end |
-| Future migration to a wider BI suite | Keep view names generic, decouple read/write repositories |
+| 本機不可安裝 Node.js(公司資安政策) | Blazor Server 完全不需要 JavaScript 建置鏈 |
+| 公司是微軟生態(SQL Server、AD、Windows Server) | C# / EF Core / Windows Auth 都是原生 |
+| 內部應用,僅內網 | SignalR 延遲可接受;無需公網安全強化 |
+| 交接後由小型團隊維護 | 端到端單一語言 |
+| 未來可延伸到更廣的 BI 套件 | View 命名通用,讀寫倉解耦 |
 
 ---
 
-## What changes between prototype and production
+## 原型與正式版的差異
 
-| Aspect | Prototype | Production |
+| 面向 | 原型 | 正式版 |
 |---|---|---|
-| Layout & styling | HTML + CSS | `.razor` components, same look |
-| State | Plain JS object | `@code` block, scoped per session |
-| Save action | `setTimeout` + `console.log` | Real `MERGE` via EF Core / Dapper |
-| Data | Synthetic `mock-data.js` | Live SQL queries |
-| Auth | None | Windows Auth or Azure AD |
-| Validation | Inline JS | DataAnnotations + custom validators |
-| Rich text | `contenteditable` | Managed component (TinyMCE / Syncfusion) |
-| Sanitization | None | `HtmlSanitizer` NuGet with whitelist |
-| Persistence | None | SQL Server |
+| 版面與樣式 | HTML + CSS | `.razor` 元件,外觀一致 |
+| 狀態 | 純 JS 物件 | `@code` 區塊,session-scoped |
+| 存檔動作 | `setTimeout` + `console.log` | 真實的 `MERGE`(EF Core / Dapper) |
+| 資料 | 合成的 `mock-data.js` | 即時 SQL 查詢 |
+| 認證 | 無 | Windows Auth 或 Azure AD |
+| 驗證 | 行內 JS | DataAnnotations + 自訂驗證 |
+| 富文本 | `contenteditable` | 受控元件(TinyMCE / Syncfusion) |
+| 清洗 | 無 | `HtmlSanitizer` NuGet + 白名單 |
+| 持久化 | 無 | SQL Server |
 
-The **layout, business logic, and UX flows** are designed once in the prototype and ported as-is to Blazor. The prototype is the spec.
+**版面、商業邏輯、UX 流程** 在原型階段一次設計到位,再原封不動移植到 Blazor。原型就是規格。

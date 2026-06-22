@@ -1,37 +1,37 @@
-# Changelog
+# 變更紀錄
 
-All notable changes to the prototype are recorded here.
+本檔案記錄原型每個版本的變動。
 
 ## [v0.3] — 2026-06-22
 
-### Added
-- `docs/ARCHITECTURE.md` rewritten with **9 mermaid diagrams**: current prototype system map, target Blazor Server architecture, read flow sequence, write flow sequence, month-lifecycle state machine, component diagram, ER diagram, phase roadmap, security boundaries.
-- `docs/TECH-STACK.md` — comprehensive tech inventory for both current prototype and target production stack, plus the constraints that drove each choice.
+### 新增
+- `docs/ARCHITECTURE.md` 改寫,加入 **9 張 Mermaid 圖**:當前原型系統地圖、目標 Blazor Server 架構、讀取流程序列圖、寫入流程序列圖、月份生命週期狀態機、元件圖、ER 圖、8 階段路線圖、資安邊界規範。
+- `docs/TECH-STACK.md`:完整的技術盤點,涵蓋當前原型與目標正式版兩套技術棧,並列出每個選擇背後的限制與理由。
 
-### Changed
-- `README.md` now includes a top-level mermaid "now → mid → then" map and points to the new architecture & tech-stack docs.
+### 變更
+- `README.md` 新增頂層的「現在 → 中期 → 目標」Mermaid 流程圖,並連到新的架構與技術棧文件。
 
 ## [v0.2] — 2026-06-22
 
-### Changed
-- Removed the legacy "switch layout" and "month-close announcement" buttons from the top bar — out of scope for the new app.
-- Each editable field now has its **own** save button:
-  - Save monthly income (`TargetAmount`)
-  - Save cost/income notes (`AmtDesc`)
-  - Save warnings & actions (`SolDesc`)
-- Added month selector to browse historical months per project.
-- Added per-field unsaved indicator and global "all saved" / "unsaved changes" badge.
-- Fixed date display: ISO date strings now render as `YYYY/MM/DD` consistently; legacy `/Date(ms)/` format is also parsed correctly.
+### 變更
+- 移除頂部的「移至新版面」與「月結公告數據」兩個按鈕,新系統不需要。
+- 每個可編輯欄位都有**自己的存檔按鈕**:
+  - 存檔本月實際收入(`TargetAmount`)
+  - 存檔投入與收入說明(`AmtDesc`)
+  - 存檔警示及具體做法(`SolDesc`)
+- 新增「月份」下拉,可以瀏覽該專案的歷史月份。
+- 新增每個欄位的「未儲存」標籤,以及頂部全域的「全部已儲存」/「未儲存變更」狀態。
+- 修正日期顯示:ISO 日期一致顯示為 `YYYY/MM/DD`;舊版 `/Date(ms)/` 格式也能正確解析。
 
-### Added
-- Dev panel (collapsible, bottom right) showing real-time calculation breakdown and pending UPSERT payload for each editable field.
+### 新增
+- 開發資訊面板(右下浮動,可收合),即時顯示計算過程與每個欄位即將寫入的 UPSERT payload。
 
 ## [v0.1] — 2026-06-22
 
-### Added
-- Initial standalone HTML/CSS/JS prototype.
-- Layout reproducing the legacy app: top bar, three-column financial grid, two rich-text sections, payment summary, payment list, footer.
-- Synthetic sample data for 10 projects with 12 months of history each.
-- Live cumulative income recalculation as `TargetAmount` is edited.
-- Microsoft Word style rich-text toolbar for the two HTML fields (bold/italic/underline/link/list/clear).
-- Simulated save with toast feedback.
+### 新增
+- 初版獨立 HTML/CSS/JS 原型。
+- 還原既有系統版面:頂部列、三欄財務網格、兩段富文本說明、付款彙總、付款明細、底部資訊。
+- 10 個合成專案 × 每案 12 個月的歷史資料。
+- `TargetAmount` 編輯時累計實際收入即時重算。
+- Microsoft Word 風格的富文本工具列(粗體/斜體/底線/連結/清單/清除格式)。
+- 模擬儲存 + toast 回饋。
