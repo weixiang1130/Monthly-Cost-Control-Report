@@ -2,6 +2,15 @@
 
 All notable changes to the prototype are recorded here.
 
+## [v0.3] — 2026-06-22
+
+### Added
+- `docs/ARCHITECTURE.md` rewritten with **9 mermaid diagrams**: current prototype system map, target Blazor Server architecture, read flow sequence, write flow sequence, month-lifecycle state machine, component diagram, ER diagram, phase roadmap, security boundaries.
+- `docs/TECH-STACK.md` — comprehensive tech inventory for both current prototype and target production stack, plus the constraints that drove each choice.
+
+### Changed
+- `README.md` now includes a top-level mermaid "now → mid → then" map and points to the new architecture & tech-stack docs.
+
 ## [v0.2] — 2026-06-22
 
 ### Changed
