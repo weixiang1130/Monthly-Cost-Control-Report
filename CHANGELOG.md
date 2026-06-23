@@ -2,6 +2,23 @@
 
 本檔案記錄原型每個版本的變動。
 
+## [v0.4] — 2026-06-22
+
+### 變更(對齊既有系統公式)
+- 新增第 4 個可編輯欄位:**Monthly estimated cost**(`MonthlyEstimatedCost`),含獨立存檔按鈕與「未儲存」標籤。
+- 修正多項計算公式以對齊既有系統:
+  - **累計實際投入** = 本月 `AccRealCost` + 本月 `MonthlyEstimatedCost`(使用者輸入)
+  - **年度累計實際投入** = `YearRealCost` + 本月 `MonthlyEstimatedCost`
+  - **年度投入差** = (顯示年度累計實際投入) − `YearEstCost`(超支為正)
+  - **累計投入%** = (顯示累計實際投入) / `BudgetRevisedAmt`
+  - **本月實際投入(預估)** 由 `RealCost` 改為使用者輸入的 `MonthlyEstimatedCost`
+  - **本月達成率** = `MonthlyEstimatedCost` / 本月 `EstCost`(原本誤用 `YearCostExecRate`)
+- 「累計實際收入」公式維持 `上月 AccRealAmt + 本月 TargetAmount`(經驗證正確)。
+- 開發資訊面板擴增,同時顯示收入側與投入側兩條計算過程,並提示 schema 待加欄位。
+
+### 已知缺口
+- `MonthlyReportDesc` schema 目前沒有 `MonthlyEstimatedCost` 欄位,需後端團隊新增。前端寫回模擬會印 payload,等 schema 補齊即可真實寫入。
+
 ## [v0.3] — 2026-06-22
 
 ### 新增

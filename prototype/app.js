@@ -1,5 +1,11 @@
-// Monthly Cost Report — Prototype v0.2
-// Business logic: cumulative income = prev month AccRealAmt + this month TargetAmount
+// Monthly Cost Report — Prototype v0.3
+// Business logic (aligned with legacy app):
+//   cumulative income = prev month AccRealAmt + this month TargetAmount (user input)
+//   cumulative cost   = this month AccRealCost + this month MonthlyEstimatedCost (user input)
+//   YTD actual cost   = YearRealCost + this month MonthlyEstimatedCost
+//   YTD cost diff     = (YTD actual cost) - YearEstCost
+//   cumulative cost % = (cumulative cost) / BudgetRevisedAmt
+//   monthly rate      = MonthlyEstimatedCost / EstCost (this month)
 // Write design: each editable field has its own save button (partial UPSERT to MonthlyReportDesc)
 
 const DATA = window.APP_DATA;
@@ -8,10 +14,11 @@ const state = {
   currentProjectId: 'P001',
   currentMonthEnd: null,
   targetAmount: 0,
+  monthlyEstimatedCost: 0,
   amtDesc: '',
   solDesc: '',
-  dirty: { target: false, amt: false, sol: false },
-  lastSaved: { target: null, amt: null, sol: null },
+  dirty: { target: false, est: false, amt: false, sol: false },
+  lastSaved: { target: null, est: null, amt: null, sol: null },
 };
 
 const fmt = {
@@ -85,10 +92,21 @@ function computeProfitRate(contract, budget) {
   if (!contract || contract === 0) return null;
   return (contract - budget) / contract;
 }
+// Cumulative income = prev AccRealAmt + this month TargetAmount
 function computeAccRealAmtDisplay(prevMonthRow, targetAmount) {
   const prev = prevMonthRow ? Number(prevMonthRow.AccRealAmt || 0) : 0;
   const cur = Number(targetAmount || 0);
   return prev + cur;
+}
+// Cumulative cost = this month AccRealCost + this month MonthlyEstimatedCost
+function computeAccRealCostDisplay(monthRow, monthlyEstCost) {
+  const base = monthRow ? Number(monthRow.AccRealCost || 0) : 0;
+  return base + Number(monthlyEstCost || 0);
+}
+// YTD actual cost = YearRealCost + this month MonthlyEstimatedCost
+function computeYearRealCostDisplay(monthRow, monthlyEstCost) {
+  const base = monthRow ? Number(monthRow.YearRealCost || 0) : 0;
+  return base + Number(monthlyEstCost || 0);
 }
 
 function renderProjectMenu() {
@@ -141,14 +159,15 @@ function loadEditableState() {
   const pid = state.currentProjectId;
   const me = state.currentMonthEnd;
   state.targetAmount = (pid === 'P001') ? 42300000 : 0;
+  state.monthlyEstimatedCost = 0;
   state.amtDesc = (pid === 'P001')
     ? `<p style="margin:0 0 8px">1. This month and cumulative cost <span style="color:#138a51">both met the target</span>, <span style="color:#1366b1">(cumulative rate ~96%)</span>.</p><p style="margin:0">2. This month's revenue achieved the target.</p>`
     : `<p style="margin:0;color:#888"><i>(No content yet for project ${pid} month ${me} — edit and save)</i></p>`;
   state.solDesc = (pid === 'P001')
     ? `<p style="margin:0 0 8px"><b style="color:#c50f1f">Warning:</b> extended end date approaching.</p><p style="margin:0">Action: coordinate trades and track milestones weekly.</p>`
     : `<p style="margin:0;color:#888"><i>(No content yet for project ${pid} month ${me} — edit and save)</i></p>`;
-  state.dirty = { target: false, amt: false, sol: false };
-  state.lastSaved = { target: null, amt: null, sol: null };
+  state.dirty = { target: false, est: false, amt: false, sol: false };
+  state.lastSaved = { target: null, est: null, amt: null, sol: null };
   updateDirtyTags();
 }
 
@@ -175,33 +194,40 @@ function render() {
   document.getElementById('budgetRevisedAmt').textContent = attr ? fmt.num(attr.BudgetRevisedAmt) : '—';
   document.getElementById('revProfitRate').textContent = attr ? fmt.pct(computeProfitRate(attr.ContractRevisedAmt, attr.BudgetRevisedAmt)) : '—';
 
+  // Aligned with legacy app formulas (2026-06-22)
   const accRealAmtCalc = computeAccRealAmtDisplay(prevMonthRow, state.targetAmount);
+  const accRealCostCalc = computeAccRealCostDisplay(monthRow, state.monthlyEstimatedCost);
   document.getElementById('accRealAmtCalc').textContent = fmt.num(accRealAmtCalc);
-  const accRealCost = monthRow ? Number(monthRow.AccRealCost || 0) : 0;
-  document.getElementById('accRealCost').textContent = fmt.num(accRealCost);
-  const accDiff = accRealAmtCalc - accRealCost;
+  document.getElementById('accRealCost').textContent = fmt.num(accRealCostCalc);
+  const accDiff = accRealAmtCalc - accRealCostCalc;
   const accDiffEl = document.getElementById('accRealDiff');
   accDiffEl.textContent = fmt.num(accDiff);
   accDiffEl.classList.toggle('neg', accDiff < 0);
 
   document.getElementById('yearEstCost').textContent = monthRow ? fmt.num(monthRow.YearEstCost) : '—';
-  document.getElementById('yearRealCost').textContent = monthRow ? fmt.num(monthRow.YearRealCost) : '—';
-  const yearDiff = monthRow ? Number(monthRow.YearEstCost || 0) - Number(monthRow.YearRealCost || 0) : 0;
+  const yearRealCostCalc = computeYearRealCostDisplay(monthRow, state.monthlyEstimatedCost);
+  document.getElementById('yearRealCost').textContent = monthRow ? fmt.num(yearRealCostCalc) : '—';
+  const yearDiff = monthRow ? yearRealCostCalc - Number(monthRow.YearEstCost || 0) : 0;
   document.getElementById('yearCostDiff').textContent = monthRow ? fmt.num(yearDiff) : '—';
 
   document.getElementById('estCost').textContent = monthRow ? fmt.num(monthRow.EstCost) : '—';
-  document.getElementById('realCost').textContent = monthRow ? fmt.num(monthRow.RealCost) : '—';
-  document.getElementById('monthAchieve').textContent = monthRow ? fmt.pct(monthRow.YearCostExecRate) : '—';
+  document.getElementById('realCost').textContent = fmt.num(state.monthlyEstimatedCost);
+  const monthEst = monthRow ? Number(monthRow.EstCost || 0) : 0;
+  const monthAchieve = monthEst > 0 ? state.monthlyEstimatedCost / monthEst : 0;
+  document.getElementById('monthAchieve').textContent = monthRow ? fmt.pct(monthAchieve) : '—';
 
-  document.getElementById('kpiAccCostRate').textContent = monthRow ? fmt.pct(monthRow.AccRealCostRate) : '—';
+  const budgetRev = attr ? Number(attr.BudgetRevisedAmt || 0) : 0;
+  const accCostRate = budgetRev > 0 ? accRealCostCalc / budgetRev : 0;
+  document.getElementById('kpiAccCostRate').textContent = monthRow ? fmt.pct(accCostRate) : '—';
 
   document.getElementById('targetAmount').value = state.targetAmount || '';
+  document.getElementById('monthlyEstimatedCost').value = state.monthlyEstimatedCost || '';
   document.getElementById('amtDesc').innerHTML = state.amtDesc;
   document.getElementById('solDesc').innerHTML = state.solDesc;
 
   renderPayments();
   updateLastSavedDisplay();
-  renderDevPanel(pid, monthEnd, prevMonthRow ? prevMonthRow.MonthEnd : null, prevMonthRow, accRealAmtCalc);
+  renderDevPanel(pid, monthEnd, prevMonthRow ? prevMonthRow.MonthEnd : null, prevMonthRow, monthRow, accRealAmtCalc, accRealCostCalc);
 }
 
 function renderPayments() {
@@ -245,22 +271,30 @@ function renderPayments() {
   document.getElementById('payAmountRatio').textContent = billSum > 0 ? (paySum / billSum * 100).toFixed(2) + ' %' : '0.00 %';
 }
 
-function renderDevPanel(pid, monthEnd, prevMonthEnd, prevMonthRow, accRealAmtCalc) {
+function renderDevPanel(pid, monthEnd, prevMonthEnd, prevMonthRow, monthRow, accRealAmtCalc, accRealCostCalc) {
   const prevAccReal = prevMonthRow ? Number(prevMonthRow.AccRealAmt || 0) : 0;
+  const baseAccCost = monthRow ? Number(monthRow.AccRealCost || 0) : 0;
   const html = `
     <div><span class="k">ProjectID:</span> <span class="v">${pid}</span></div>
     <div><span class="k">MonthEnd:</span> <span class="v">${monthEnd}</span></div>
     <div><span class="k">PrevMonth:</span> <span class="v">${prevMonthEnd || '(none)'}</span></div>
     <hr style="border-color:#444;margin:6px 0">
-    <div><span class="k">// Cumulative income logic:</span></div>
+    <div><span class="k">// Cumulative income:</span></div>
     <div>= prev AccRealAmt + this TargetAmount</div>
-    <div><span class="k">Prev AccRealAmt:</span> <span class="v">${fmt.num(prevAccReal)}</span></div>
-    <div><span class="k">This TargetAmount:</span> <span class="v">${fmt.num(state.targetAmount)}</span></div>
-    <div><span class="k">→ Cumulative income:</span> <span class="v" style="color:#82dded">${fmt.num(accRealAmtCalc)}</span></div>
+    <div><span class="k">  Prev AccRealAmt:</span> <span class="v">${fmt.num(prevAccReal)}</span></div>
+    <div><span class="k">  This TargetAmount:</span> <span class="v">${fmt.num(state.targetAmount)}</span></div>
+    <div><span class="k">  → Cumulative income:</span> <span class="v" style="color:#82dded">${fmt.num(accRealAmtCalc)}</span></div>
     <hr style="border-color:#444;margin:6px 0">
-    <div><span class="k">// Per-field UPSERTs:</span></div>
+    <div><span class="k">// Cumulative cost:</span></div>
+    <div>= this AccRealCost + this MonthlyEstimatedCost</div>
+    <div><span class="k">  This AccRealCost:</span> <span class="v">${fmt.num(baseAccCost)}</span></div>
+    <div><span class="k">  MonthlyEstimatedCost:</span> <span class="v">${fmt.num(state.monthlyEstimatedCost)}</span></div>
+    <div><span class="k">  → Cumulative cost:</span> <span class="v" style="color:#82dded">${fmt.num(accRealCostCalc)}</span></div>
+    <hr style="border-color:#444;margin:6px 0">
+    <div><span class="k">// 4 per-field UPSERTs:</span></div>
     <div>MonthlyReportDesc (PK: ProjectID + MonthEnd)</div>
     <div><span class="k">  TargetAmount:</span> ${fmt.num(state.targetAmount)} ${state.dirty.target?'⚠':''}</div>
+    <div><span class="k">  MonthlyEstimatedCost:</span> ${fmt.num(state.monthlyEstimatedCost)} ${state.dirty.est?'⚠':''} <span style="color:#ff6">⚠ schema TBD</span></div>
     <div><span class="k">  AmtDesc:</span> ${state.amtDesc.length} chars ${state.dirty.amt?'⚠':''}</div>
     <div><span class="k">  SolDesc:</span> ${state.solDesc.length} chars ${state.dirty.sol?'⚠':''}</div>
     <hr style="border-color:#444;margin:6px 0">
@@ -269,12 +303,14 @@ function renderDevPanel(pid, monthEnd, prevMonthEnd, prevMonthRow, accRealAmtCal
   document.getElementById('devInfo').innerHTML = html;
 }
 
-function hasAnyDirty() { return state.dirty.target || state.dirty.amt || state.dirty.sol; }
+function hasAnyDirty() { return state.dirty.target || state.dirty.est || state.dirty.amt || state.dirty.sol; }
 function markDirty(field) { if (state.dirty[field]) return; state.dirty[field] = true; updateDirtyTags(); }
 function clearDirty(field) { state.dirty[field] = false; state.lastSaved[field] = new Date().toISOString(); updateDirtyTags(); }
 
 function updateDirtyTags() {
   document.getElementById('dirtyTarget').style.display = state.dirty.target ? '' : 'none';
+  const dEst = document.getElementById('dirtyEst');
+  if (dEst) dEst.style.display = state.dirty.est ? '' : 'none';
   document.getElementById('dirtyAmt').style.display = state.dirty.amt ? '' : 'none';
   document.getElementById('dirtySol').style.display = state.dirty.sol ? '' : 'none';
   const g = document.getElementById('globalDirty');
@@ -305,6 +341,11 @@ function setupInteractions() {
     state.targetAmount = Number(target.value) || 0;
     markDirty('target'); render();
   });
+  const est = document.getElementById('monthlyEstimatedCost');
+  if (est) est.addEventListener('input', () => {
+    state.monthlyEstimatedCost = Number(est.value) || 0;
+    markDirty('est'); render();
+  });
   document.getElementById('amtDesc').addEventListener('input', () => {
     state.amtDesc = document.getElementById('amtDesc').innerHTML;
     markDirty('amt');
@@ -328,6 +369,8 @@ function setupInteractions() {
   });
 
   setupSaveButton('saveTarget', 'target', 'monthly income', () => ({ TargetAmount: state.targetAmount }));
+  const saveEstBtn = document.getElementById('saveEst');
+  if (saveEstBtn) setupSaveButton('saveEst', 'est', 'monthly estimated cost', () => ({ MonthlyEstimatedCost: state.monthlyEstimatedCost }));
   setupSaveButton('saveAmt', 'amt', 'cost/income notes', () => ({ AmtDesc: state.amtDesc }));
   setupSaveButton('saveSol', 'sol', 'warnings & actions', () => ({ SolDesc: state.solDesc }));
 
