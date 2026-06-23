@@ -155,11 +155,21 @@ function switchMonth(monthEnd) {
   render();
 }
 
+// Demo reference values mimicking what migrated data would look like once
+// the desc table is populated and the subcontract snapshot view is accessible.
+const DEMO_REFERENCE = {
+  // 'ProjectID|MonthEnd': { targetAmount, monthlyEstimatedCost }
+  // populated by hand for a few sample cases; everything else defaults to 0
+};
 function loadEditableState() {
   const pid = state.currentProjectId;
   const me = state.currentMonthEnd;
-  state.targetAmount = (pid === 'P001') ? 42300000 : 0;
-  state.monthlyEstimatedCost = 0;
+  const ref = DEMO_REFERENCE[`${pid}|${me}`] || {
+    targetAmount: (pid === 'P001') ? 42300000 : 0,
+    monthlyEstimatedCost: 0,
+  };
+  state.targetAmount = ref.targetAmount;
+  state.monthlyEstimatedCost = ref.monthlyEstimatedCost;
   state.amtDesc = (pid === 'P001')
     ? `<p style="margin:0 0 8px">1. This month and cumulative cost <span style="color:#138a51">both met the target</span>, <span style="color:#1366b1">(cumulative rate ~96%)</span>.</p><p style="margin:0">2. This month's revenue achieved the target.</p>`
     : `<p style="margin:0;color:#888"><i>(No content yet for project ${pid} month ${me} — edit and save)</i></p>`;

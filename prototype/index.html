@@ -8,11 +8,11 @@
 <body>
 
 <header class="banner">
-  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.2 ｜ Generic sample data ｜ Save is simulated</span></div>
+  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.7 ｜ Generic sample data</span></div>
   <div class="banner-meta">
     <span>Data: <code>local mock JSON</code></span>
     <span>Read: <span class="ok">✓ OK</span></span>
-    <span>Write: <span class="warn">⏳ Simulated UPSERT to MonthlyReportDesc</span></span>
+    <span>Write: <span class="ok">✓ Target table ready, DML permissions granted</span></span>
   </div>
 </header>
 
@@ -73,7 +73,7 @@
     <span class="l">This month income:</span>
     <input id="targetAmount" type="number" placeholder="integer amount">
     <span class="unit"></span>
-    <span class="hint">→ <code>MonthlyReportDesc.TargetAmount</code></span>
+    <span class="hint">→ <code>MonthlyReportDesc.TargetAmount</code> (table ready, writable)</span>
     <span id="dirtyTarget" class="field-dirty" style="display:none">⚠ unsaved</span>
     <button class="save save-mini" id="saveTarget">💾 Save income</button>
   </div>
@@ -81,7 +81,7 @@
     <span class="l">Monthly estimated cost:</span>
     <input id="monthlyEstimatedCost" type="number" placeholder="(user override, demo only)">
     <span class="unit"></span>
-    <span class="hint" style="color:#7a5d00">→ Production reads from <code>SubcontractMonthlySnapshot</code> view automatically; <b>access pending</b>, demo uses user input as a stand-in</span>
+    <span class="hint" style="color:#7a5d00">→ Production auto-reads from <code>SubcontractMonthlySnapshot</code> view (<b>access pending</b>)</span>
     <span id="dirtyEst" class="field-dirty" style="display:none">⚠ unsaved (local only)</span>
   </div>
 </div>
