@@ -77,13 +77,12 @@
     <span id="dirtyTarget" class="field-dirty" style="display:none">⚠ unsaved</span>
     <button class="save save-mini" id="saveTarget">💾 Save income</button>
   </div>
-  <div class="income-row" style="margin-top:8px">
+  <div class="income-row" style="margin-top:8px;background:#f8f4ea;padding:8px;border-radius:4px;border:1px dashed #d4af37">
     <span class="l">Monthly estimated cost:</span>
-    <input id="monthlyEstimatedCost" type="number" placeholder="integer amount">
+    <input id="monthlyEstimatedCost" type="number" placeholder="(user override, demo only)">
     <span class="unit"></span>
-    <span class="hint">→ <code>MonthlyReportDesc.MonthlyEstimatedCost</code> <b style="color:#c00">⚠ schema TBD</b></span>
-    <span id="dirtyEst" class="field-dirty" style="display:none">⚠ unsaved</span>
-    <button class="save save-mini" id="saveEst">💾 Save cost</button>
+    <span class="hint" style="color:#7a5d00">→ Production reads from <code>SubcontractMonthlySnapshot</code> view automatically; <b>access pending</b>, demo uses user input as a stand-in</span>
+    <span id="dirtyEst" class="field-dirty" style="display:none">⚠ unsaved (local only)</span>
   </div>
 </div>
 

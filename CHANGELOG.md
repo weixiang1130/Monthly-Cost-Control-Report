@@ -2,6 +2,17 @@
 
 本檔案記錄原型每個版本的變動。
 
+## [v0.5] — 2026-06-22
+
+### 變更(對齊後端補充規格)
+- 確認後端最新規格:`MonthlyReportDesc` 寫入表仍維持 5 個資料欄(`AmtDesc / SolDesc / TargetAmount` 三個使用者填寫欄 + 啟用旗標 + 稽核欄位),**未新增** monthly estimated cost 欄位。
+- 「Monthly estimated cost」欄位重新定位:正式版改為從 `SubcontractMonthlySnapshot` view 自動讀取(月初快照,非使用者輸入);本原型暫時保留 input 作為 demo 用,但移除存檔按鈕並調整視覺(米色 dashed border)以表明是暫態占位。
+- UI 提示明確標示「access pending」,提醒後端團隊需開放小包計彙總 view 的 SELECT 權限。
+
+### 已知缺口
+- 寫入表 `MonthlyReportDesc` 已建立但本帳號尚無 INSERT/UPDATE 權限。
+- 小包計彙總快照 view 帳號無 SELECT 權限,無法驗證「monthly estimated cost」的真實計算方式。
+
 ## [v0.4] — 2026-06-22
 
 ### 變更(對齊既有系統公式)
