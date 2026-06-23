@@ -2,6 +2,20 @@
 
 本檔案記錄原型每個版本的變動。
 
+## [v0.6] — 2026-06-23
+
+### 後端驗證(無前端變更)
+- 後端寫入表 `MonthlyReportDesc`(別名)確認最終結構:12 欄、主鍵 CLUSTERED on (ProjectID, MonthEnd)、所有欄位 default 設好(`TargetAmount=0`、`Active=1`、`CreateDate=getdate()`)。
+- 寫入冒煙測試(INSERT 與 MERGE UPSERT)全數通過,DML 權限完整授予。
+- 後端準備就緒,前端可在 Phase 5 直接接 real write-back。
+
+### 已知小差異
+- `UpdDate` 規格寫 nullable,實際 DB 為 NOT NULL 且無 default → 後端服務層 INSERT/UPDATE 都需明確帶 `GETDATE()`。
+- `AmtDesc / SolDesc` 規格寫 default '',實際 DB 為 nullable 無 default → 寫入時需自行填空字串或允許 NULL。
+
+### 文件
+- 補上 `MERGE` UPSERT 範本至 `docs/BUSINESS-LOGIC.md`(供後端團隊參考)。
+
 ## [v0.5] — 2026-06-22
 
 ### 變更(對齊後端補充規格)

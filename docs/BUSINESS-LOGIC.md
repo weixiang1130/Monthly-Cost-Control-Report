@@ -57,3 +57,41 @@
 |---|---|
 | 填報人 Editor | 編輯自己負責的專案、僅當月 |
 | 管理員 Admin | 全部專案檢視、執行月結/解鎖、權限管理 |
+
+## 寫入(UPSERT)範本
+
+寫回採用 `MERGE`,以 `(ProjectID, MonthEnd)` 為複合主鍵。每個可編輯欄位可獨立呼叫,只更新自己負責的欄位 + 稽核資料。
+
+```sql
+MERGE dbo.MonthlyReportDesc AS T
+USING (SELECT @ProjectID AS ProjectID,
+              @MonthEnd  AS MonthEnd,
+              @TargetAmount AS TargetAmount,
+              @AmtDesc      AS AmtDesc,
+              @SolDesc      AS SolDesc) AS S
+ON T.ProjectID = S.ProjectID
+   AND T.MonthEnd = S.MonthEnd
+WHEN MATCHED THEN
+  UPDATE SET
+    TargetAmount = S.TargetAmount,
+    AmtDesc      = S.AmtDesc,
+    SolDesc      = S.SolDesc,
+    UpdDate      = GETDATE(),
+    UpdUserID    = @UserID,
+    UpdUserName  = @UserName
+WHEN NOT MATCHED THEN
+  INSERT (ProjectID, MonthEnd,
+          AmtDesc, SolDesc, TargetAmount,
+          Active, CreateDate, CreateUserID, CreateUserName,
+          UpdDate, UpdUserID, UpdUserName)
+  VALUES (S.ProjectID, S.MonthEnd,
+          S.AmtDesc, S.SolDesc, S.TargetAmount,
+          1, GETDATE(), @UserID, @UserName,
+          GETDATE(), @UserID, @UserName);
+```
+
+### 注意事項
+
+- `UpdDate` 在實際 DB 為 NOT NULL 且無 default,INSERT 與 UPDATE 都必須帶 `GETDATE()`。
+- 主鍵衝突會自動轉成 UPDATE,不會擲出例外。
+- 對「每欄位獨立存檔」的設計,可將 `MERGE` 拆成只更新單一欄位的版本。
