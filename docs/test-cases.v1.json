@@ -1,0 +1,290 @@
+{
+  "title": "成控月報 邊界與驗證測試案例表",
+  "version": "1.0",
+  "date": "2026-06-24",
+  "basis": "資料合約 v2.0 公式;對應路線圖 Phase 6 測試前置",
+  "summary": {
+    "總案例": 29,
+    "可自動驗證": 25,
+    "通過": 25,
+    "政策待實作(G5)": 4
+  },
+  "groups": {
+    "G1 驗證": "本月實際收入欄位輸入驗證",
+    "G2 除零": "所有比率/利潤率分母為 0 須回 0",
+    "G3 累計": "跨月累計(上月基底 + 本月輸入)",
+    "G4 方向": "差額正負方向(超支為正、收支差紅字)",
+    "G5 HTML清洗": "富文本寫回前 XSS 清洗驗收準則(待 Phase 5)",
+    "G6 鎖定/過濾": "月結鎖定/歷史唯讀/專案過濾(v0.9 已實測)"
+  },
+  "cases": [
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount=''",
+      "expected": {
+        "ok": true,
+        "msg": ""
+      },
+      "actual": {
+        "ok": true,
+        "msg": ""
+      },
+      "pass": true,
+      "note": "空值非必填"
+    },
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount='0'",
+      "expected": {
+        "ok": true,
+        "msg": ""
+      },
+      "actual": {
+        "ok": true,
+        "msg": ""
+      },
+      "pass": true,
+      "note": "空值非必填"
+    },
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount='1234'",
+      "expected": {
+        "ok": true,
+        "msg": ""
+      },
+      "actual": {
+        "ok": true,
+        "msg": ""
+      },
+      "pass": true,
+      "note": "空值非必填"
+    },
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount='-5'",
+      "expected": {
+        "ok": false,
+        "msg": "不可為負數"
+      },
+      "actual": {
+        "ok": false,
+        "msg": "不可為負數"
+      },
+      "pass": true,
+      "note": "空值非必填"
+    },
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount='1234.5'",
+      "expected": {
+        "ok": false,
+        "msg": "請輸入整數"
+      },
+      "actual": {
+        "ok": false,
+        "msg": "請輸入整數"
+      },
+      "pass": true,
+      "note": "空值非必填"
+    },
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount='999999999999'",
+      "expected": {
+        "ok": true,
+        "msg": ""
+      },
+      "actual": {
+        "ok": true,
+        "msg": ""
+      },
+      "pass": true,
+      "note": "空值非必填"
+    },
+    {
+      "group": "G1 驗證",
+      "case": "TargetAmount='abc'(number 欄位會剝除→空)",
+      "expected": "視為空值,合法",
+      "actual": "number input 不接受非數字",
+      "pass": true,
+      "note": "原型 type=number 已擋"
+    },
+    {
+      "group": "G2 除零",
+      "case": "原始利潤率 ContractAmt=0 →—",
+      "expected": null,
+      "actual": null,
+      "pass": true,
+      "note": "資料異常,顯示 —"
+    },
+    {
+      "group": "G2 除零",
+      "case": "修正利潤率 ContractRevisedAmt=0 →—",
+      "expected": null,
+      "actual": null,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G2 除零",
+      "case": "累計投入% BudgetRevisedAmt=0 →0",
+      "expected": 0.0,
+      "actual": 0.0,
+      "pass": true,
+      "note": "空狀態,顯示 0.00%"
+    },
+    {
+      "group": "G2 除零",
+      "case": "本月達成率 EstCost=0 →0",
+      "expected": 0.0,
+      "actual": 0.0,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G2 除零",
+      "case": "付款比例 billCount=0 →0",
+      "expected": 0.0,
+      "actual": 0.0,
+      "pass": true,
+      "note": "本月無付款,正常"
+    },
+    {
+      "group": "G2 除零",
+      "case": "付款金額比例 billAmount=0 →0",
+      "expected": 0.0,
+      "actual": 0.0,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G3 累計",
+      "case": "累計收入=上月100+本月20",
+      "expected": 120.0,
+      "actual": 120,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G3 累計",
+      "case": "首月(無上月)=0+20",
+      "expected": 20.0,
+      "actual": 20,
+      "pass": true,
+      "note": "首月 prev 基底為 0"
+    },
+    {
+      "group": "G3 累計",
+      "case": "累計投入=基底500+預估15",
+      "expected": 515.0,
+      "actual": 515,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G3 累計",
+      "case": "本月實際收入空(0)→累計=上月值",
+      "expected": 100.0,
+      "actual": 100,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G4 方向",
+      "case": "年度投入差 超支為正(492-307)",
+      "expected": 185.0,
+      "actual": 185,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G4 方向",
+      "case": "年度投入差 未超支為負(300-307)",
+      "expected": -7.0,
+      "actual": -7,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G4 方向",
+      "case": "累計收支差 收<支為負(120-515)",
+      "expected": -395.0,
+      "actual": -395,
+      "pass": true,
+      "note": "前端顯示紅字"
+    },
+    {
+      "group": "G4 方向",
+      "case": "原始利潤率 正常(100,90)=10%",
+      "expected": 0.1,
+      "actual": 0.1,
+      "pass": true,
+      "note": ""
+    },
+    {
+      "group": "G5 HTML清洗",
+      "case": "<script>alert(1)</script>投入正常",
+      "expected": "移除 <script>,保留文字「投入正常」",
+      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
+      "pass": null,
+      "note": "Phase 5 寫回前必做;此為驗收準則"
+    },
+    {
+      "group": "G5 HTML清洗",
+      "case": "<img src=x onerror=alert(1)>",
+      "expected": "移除 onerror 事件屬性",
+      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
+      "pass": null,
+      "note": "Phase 5 寫回前必做;此為驗收準則"
+    },
+    {
+      "group": "G5 HTML清洗",
+      "case": "<b>粗體</b><a href=\"javascript:evil()\">x</",
+      "expected": "保留 <b>;移除 javascript: href",
+      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
+      "pass": null,
+      "note": "Phase 5 寫回前必做;此為驗收準則"
+    },
+    {
+      "group": "G5 HTML清洗",
+      "case": "<p style=\"color:red\">正常富文本</p>",
+      "expected": "保留(白名單內標籤/樣式)",
+      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
+      "pass": null,
+      "note": "Phase 5 寫回前必做;此為驗收準則"
+    },
+    {
+      "group": "G6 鎖定/過濾",
+      "case": "最新月份",
+      "expected": "可編輯",
+      "actual": "v0.9 瀏覽器實測通過",
+      "pass": true,
+      "note": "互動行為"
+    },
+    {
+      "group": "G6 鎖定/過濾",
+      "case": "歷史月份",
+      "expected": "唯讀(黃幅)",
+      "actual": "v0.9 瀏覽器實測通過",
+      "pass": true,
+      "note": "互動行為"
+    },
+    {
+      "group": "G6 鎖定/過濾",
+      "case": "月結鎖定當月",
+      "expected": "唯讀(紅幅)",
+      "actual": "v0.9 瀏覽器實測通過",
+      "pass": true,
+      "note": "互動行為"
+    },
+    {
+      "group": "G6 鎖定/過濾",
+      "case": "已結算專案",
+      "expected": "不列入下拉",
+      "actual": "v0.9 瀏覽器實測通過",
+      "pass": true,
+      "note": "互動行為"
+    }
+  ]
+}

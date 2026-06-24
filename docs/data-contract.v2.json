@@ -252,7 +252,7 @@
         "ContractAmt",
         "BudgetAmt"
       ],
-      "notes": "分母 0 回 0"
+      "notes": "分母(來價)為 0 → null 顯示「—」(資料異常,不偽報 0%);對齊原型 computeProfitRate"
     },
     {
       "section": "總覽",
@@ -289,7 +289,7 @@
         "ContractRevisedAmt",
         "BudgetRevisedAmt"
       ],
-      "notes": "分母 0 回 0"
+      "notes": "同上:來價 0 → 顯示「—」"
     },
     {
       "section": "總覽",
@@ -634,7 +634,7 @@
         "MonthlyPaymentCount",
         "MonthlyBillingCount"
       ],
-      "notes": "分母 0 回 0"
+      "notes": "分母為 0 → 0,顯示 0.00%(本月無計價屬正常空狀態)"
     },
     {
       "section": "付款彙總",
@@ -649,7 +649,7 @@
         "MonthlyPaymentAmount",
         "MonthlyBillingAmount"
       ],
-      "notes": "分母 0 回 0"
+      "notes": "分母為 0 → 0,顯示 0.00%(同上)"
     }
   ],
   "lockModel": {
@@ -692,5 +692,6 @@
     "專案分權資料源 — IT回填單【4】",
     "月結鎖定狀態欄位 — IT回填單【5】",
     "資料同步時效 — IT回填單【6】"
-  ]
+  ],
+  "dividePolicy": "利潤率類(分母=來價/合約):分母 0 → 顯示「—」(資料異常);其餘比率(投入%/達成率/付款比例,分母=預算/件數):分母 0 → 0.00%(空狀態正常)"
 }
