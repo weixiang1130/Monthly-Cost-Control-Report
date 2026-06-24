@@ -8,7 +8,7 @@
 <body>
 
 <header class="banner">
-  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.7 ｜ Generic sample data</span></div>
+  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.8 ｜ Power Apps layout replica</span></div>
   <div class="banner-meta">
     <span>Data: <code>local mock JSON</code></span>
     <span>Read: <span class="ok">✓ OK</span></span>
@@ -16,6 +16,7 @@
   </div>
 </header>
 
+<!-- ===== Top bar: Date | PID | Project dropdown | Month selector | Save status ===== -->
 <div class="topbar">
   <span class="date" id="reportDate">—</span>
   <span class="pid" id="pid">—</span>
@@ -29,69 +30,65 @@
     <select id="monthsel"></select>
   </div>
   <span id="globalDirty" class="clean">✓ All saved</span>
-  <div class="acckpi"><span class="lbl">Cumulative cost:</span><span class="val" id="kpiAccCostRate">—</span></div>
 </div>
 
-<div class="row dates">
-  <div class="cell"><span class="l">Expected start</span><span class="v" id="expStartDate">—</span></div>
-  <div class="cell"><span class="l">Expected end</span><span class="v" id="expEndDate">—</span></div>
-  <div class="cell"><span class="l">Extended end</span><span class="v" id="extEndDate">—</span></div>
-</div>
-<div class="row">
-  <div class="cell"><span class="l">Contract amount</span><span class="v" id="contractAmt">—</span></div>
-  <div class="cell"><span class="l">Budget</span><span class="v" id="budgetAmt">—</span></div>
-  <div class="cell"><span class="l">Profit rate <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="origProfitRate">—</span></div>
-</div>
-<div class="row">
-  <div class="cell"><span class="l">Revised contract</span><span class="v" id="contractRevisedAmt">—</span></div>
-  <div class="cell"><span class="l">Revised budget</span><span class="v" id="budgetRevisedAmt">—</span></div>
-  <div class="cell"><span class="l">Revised profit rate <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="revProfitRate">—</span></div>
-</div>
-<div class="row">
-  <div class="cell">
-    <span class="l">Cumulative income <i class="calc-mark" title="Prev month AccRealAmt + this month TargetAmount">∑</i></span>
-    <span class="v calc" id="accRealAmtCalc">—</span>
+<!-- ===== Financial grid card (PA replica) ===== -->
+<div class="grid-card">
+  <!-- Row 1: Dates + cumulative cost KPI (PA puts it here) -->
+  <div class="row row-4col dates">
+    <div class="cell"><span class="l">Expected start</span><span class="v" id="expStartDate">—</span></div>
+    <div class="cell"><span class="l">Expected end</span><span class="v" id="expEndDate">—</span></div>
+    <div class="cell"><span class="l">Extended end</span><span class="v" id="extEndDate">—</span></div>
+    <div class="cell kpi-cell"><span class="l">Cumulative cost:</span><span class="v kpi-val" id="kpiAccCostRate">—</span></div>
   </div>
-  <div class="cell"><span class="l">Cumulative cost</span><span class="v" id="accRealCost">—</span></div>
-  <div class="cell"><span class="l">Cumulative diff <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="accRealDiff">—</span></div>
-</div>
-<div class="row">
-  <div class="cell"><span class="l">YTD planned cost</span><span class="v" id="yearEstCost">—</span></div>
-  <div class="cell"><span class="l">YTD actual cost</span><span class="v" id="yearRealCost">—</span></div>
-  <div class="cell"><span class="l">YTD cost diff <i class="calc-mark" title="Derived">∑</i></span><span class="v calc" id="yearCostDiff">—</span></div>
-</div>
-<div class="row">
-  <div class="cell"><span class="l">Monthly planned cost</span><span class="v" id="estCost">—</span></div>
-  <div class="cell"><span class="l">Monthly actual cost</span><span class="v" id="realCost">—</span></div>
-  <div class="cell"><span class="l">Monthly rate</span><span class="v" id="monthAchieve">—</span></div>
-</div>
-
-<!-- Editable 1: monthly income target -->
-<div class="section-title">Monthly income (editable):<span class="edit-tag">editable</span></div>
-<div class="editable-block compact">
-  <div class="income-row">
-    <span class="l">This month income:</span>
-    <input id="targetAmount" type="number" placeholder="integer amount">
-    <span class="unit"></span>
-    <span class="hint">→ <code>MonthlyReportDesc.TargetAmount</code> (table ready, writable)</span>
-    <span id="dirtyTarget" class="field-dirty" style="display:none">⚠ unsaved</span>
-    <button class="save save-mini" id="saveTarget">💾 Save income</button>
+  <!-- Row 2 -->
+  <div class="row">
+    <div class="cell"><span class="l">Contract amount</span><span class="v" id="contractAmt">—</span></div>
+    <div class="cell"><span class="l">Budget</span><span class="v" id="budgetAmt">—</span></div>
+    <div class="cell"><span class="l">Profit rate</span><span class="v calc" id="origProfitRate">—</span></div>
   </div>
-  <div class="income-row" style="margin-top:8px;background:#f8f4ea;padding:8px;border-radius:4px;border:1px dashed #d4af37">
-    <span class="l">Monthly estimated cost:</span>
-    <input id="monthlyEstimatedCost" type="number" placeholder="(user override, demo only)">
-    <span class="unit"></span>
-    <span class="hint" style="color:#7a5d00">→ Production auto-reads from <code>SubcontractMonthlySnapshot</code> view (<b>access pending</b>)</span>
-    <span id="dirtyEst" class="field-dirty" style="display:none">⚠ unsaved (local only)</span>
+  <!-- Row 3 -->
+  <div class="row">
+    <div class="cell"><span class="l">Revised contract</span><span class="v" id="contractRevisedAmt">—</span></div>
+    <div class="cell"><span class="l">Revised budget</span><span class="v" id="budgetRevisedAmt">—</span></div>
+    <div class="cell"><span class="l">Revised profit rate</span><span class="v calc" id="revProfitRate">—</span></div>
+  </div>
+  <!-- Row 4 -->
+  <div class="row">
+    <div class="cell"><span class="l">Cumulative income</span><span class="v calc" id="accRealAmtCalc">—</span></div>
+    <div class="cell"><span class="l">Cumulative cost</span><span class="v" id="accRealCost">—</span></div>
+    <div class="cell"><span class="l">Cumulative diff</span><span class="v calc" id="accRealDiff">—</span></div>
+  </div>
+  <!-- Row 5 -->
+  <div class="row">
+    <div class="cell"><span class="l">YTD planned cost</span><span class="v" id="yearEstCost">—</span></div>
+    <div class="cell"><span class="l">YTD actual cost</span><span class="v" id="yearRealCost">—</span></div>
+    <div class="cell"><span class="l">YTD cost diff</span><span class="v calc" id="yearCostDiff">—</span></div>
+  </div>
+  <!-- Row 6 -->
+  <div class="row">
+    <div class="cell"><span class="l">Monthly planned cost</span><span class="v" id="estCost">—</span></div>
+    <div class="cell"><span class="l">Monthly actual cost</span><span class="v" id="realCost">—</span></div>
+    <div class="cell"><span class="l">Monthly rate</span><span class="v" id="monthAchieve">—</span></div>
+  </div>
+  <!-- Row 7: Monthly income (editable, inline at grid bottom) -->
+  <div class="row editable-row">
+    <div class="cell income-cell">
+      <span class="l">Monthly income</span>
+      <input id="targetAmount" type="number" placeholder="integer amount">
+      <span class="unit"></span>
+      <span id="dirtyTarget" class="field-dirty" style="display:none">⚠ unsaved</span>
+      <button class="save save-mini" id="saveTarget">💾 Save</button>
+    </div>
   </div>
 </div>
 
-<!-- Editable 2: notes -->
-<div class="section-title">Cost / income notes (editable):<span class="edit-tag">editable</span></div>
-<div class="editable-block">
+<!-- ===== Cost / income notes (rich text, PA style) ===== -->
+<div class="section-title">Cost / income notes</div>
+<div class="rt-card">
   <div class="rt">
     <div class="rt-tool">
-      <select class="rt-sel" disabled><option>Normal</option></select>
+      <select class="rt-sel" disabled><option>Format</option></select>
       <span class="sep"></span>
       <button class="tb" data-cmd="bold" title="Bold"><b>B</b></button>
       <button class="tb" data-cmd="italic" title="Italic"><i>I</i></button>
@@ -108,31 +105,32 @@
     <div id="amtDesc" class="rt-body" contenteditable="true" data-field="AmtDesc"></div>
   </div>
   <div class="block-footer">
-    <span class="rt-hint">→ <code>MonthlyReportDesc.AmtDesc</code> (nvarchar(MAX), HTML)</span>
     <span id="dirtyAmt" class="field-dirty" style="display:none">⚠ unsaved</span>
     <button class="save" id="saveAmt">💾 Save notes</button>
   </div>
 </div>
 
-<!-- Read-only: payments -->
-<div class="section-title">Project payments:</div>
-<div class="paykpi">
-  <div class="cell"><span class="l">Paid count:</span><span class="v" id="payCount">0</span></div>
-  <div class="cell"><span class="l">Paid ratio:</span><span class="v" id="payRatio">0.00 %</span></div>
-  <div class="cell"><span class="l">Paid amount:</span><span class="v" id="payAmount">—</span></div>
-  <div class="cell"><span class="l">Paid amount ratio:</span><span class="v" id="payAmountRatio">0.00 %</span></div>
-</div>
-<div class="paytbl">
-  <table>
-    <colgroup><col style="width:8%"><col style="width:28%"><col style="width:22%"><col style="width:12%"><col style="width:8%"><col style="width:12%"><col style="width:10%"></colgroup>
-    <thead><tr><th>Paid</th><th>Contract</th><th>Vendor</th><th class="r">Amount</th><th>Phase</th><th>Date</th><th>Status</th></tr></thead>
-    <tbody id="payRows"></tbody>
-  </table>
+<!-- ===== Project payments (PA style: stats row + 5-column table) ===== -->
+<div class="section-title">Project payments</div>
+<div class="pay-card">
+  <div class="paykpi">
+    <div class="kpi-item"><span class="l">Paid count:</span><span class="v" id="payCount">0</span></div>
+    <div class="kpi-item"><span class="l">Paid ratio:</span><span class="v" id="payRatio">0.00 %</span></div>
+    <div class="kpi-item"><span class="l">Paid amount:</span><span class="v" id="payAmount">—</span></div>
+    <div class="kpi-item"><span class="l">Paid amount ratio:</span><span class="v" id="payAmountRatio">0.00 %</span></div>
+  </div>
+  <div class="paytbl">
+    <table>
+      <colgroup><col style="width:35%"><col style="width:25%"><col style="width:16%"><col style="width:10%"><col style="width:14%"></colgroup>
+      <thead><tr><th>Contract</th><th>Vendor</th><th class="r">Amount</th><th>Phase</th><th>Date</th></tr></thead>
+      <tbody id="payRows"></tbody>
+    </table>
+  </div>
 </div>
 
-<!-- Editable 3: warnings & actions -->
-<div class="section-title">Warnings & actions (editable):<span class="edit-tag">editable</span></div>
-<div class="editable-block">
+<!-- ===== Warnings & actions (rich text, PA style) ===== -->
+<div class="section-title">Warnings & actions</div>
+<div class="rt-card">
   <div class="rt">
     <div class="rt-tool">
       <select class="rt-sel" disabled><option>Format</option></select>
@@ -152,11 +150,22 @@
     <div id="solDesc" class="rt-body" contenteditable="true" data-field="SolDesc"></div>
   </div>
   <div class="block-footer">
-    <span class="rt-hint">→ <code>MonthlyReportDesc.SolDesc</code> (nvarchar(MAX), HTML)</span>
     <span id="dirtySol" class="field-dirty" style="display:none">⚠ unsaved</span>
     <button class="save" id="saveSol">💾 Save warnings</button>
   </div>
 </div>
+
+<!-- ===== Dev override: MonthlyEstimatedCost (collapsible, auto-read in prod) ===== -->
+<details class="dev-override">
+  <summary>🔧 Dev: override monthly estimated cost</summary>
+  <div class="dev-override-body">
+    <span class="l">MonthlyEstimatedCost:</span>
+    <input id="monthlyEstimatedCost" type="number" placeholder="(user override, demo only)">
+    <span class="unit"></span>
+    <span class="hint">→ Production auto-reads from SubcontractMonthlySnapshot view (access pending)</span>
+    <span id="dirtyEst" class="field-dirty" style="display:none">⚠ unsaved (local only)</span>
+  </div>
+</details>
 
 <div class="footer">
   <span class="meta">User: <span id="userMeta">demo_user</span>　｜　Write target: <code>MonthlyReportDesc</code> (simulated)　｜　Last saved: <span id="lasttime">never</span></span>

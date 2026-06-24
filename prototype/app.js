@@ -247,7 +247,7 @@ function renderPayments() {
   tbody.innerHTML = '';
   const payments = getPaymentsForProject(pid, me);
   if (payments.length === 0) {
-    tbody.innerHTML = '<tr class="empty"><td colspan="7">No payment records this month</td></tr>';
+    tbody.innerHTML = '<tr class="empty"><td colspan="5">No payment records this month</td></tr>';
     document.getElementById('payCount').textContent = '0';
     document.getElementById('payRatio').textContent = '0.00 %';
     document.getElementById('payAmount').textContent = '—';
@@ -257,15 +257,12 @@ function renderPayments() {
   const sorted = [...payments].sort((a, b) => String(b.PayDate || '').localeCompare(String(a.PayDate || '')));
   sorted.slice(0, 20).forEach(p => {
     const tr = document.createElement('tr');
-    const isPay = p.IsPay === true || String(p.IsPay).toLowerCase() === 'true';
     tr.innerHTML = `
-      <td class="c ${isPay ? 'pay-y' : 'pay-n'}">${isPay ? '✓' : '—'}</td>
       <td>${p.ContractName || ''}</td>
       <td>${p.VendorName || ''}</td>
       <td class="n">${fmt.num(p.Amount)}</td>
       <td class="c">${p.PayPhase || ''}</td>
       <td class="c">${fmt.rocDate(p.PayDate)}</td>
-      <td class="c" style="color:#888">${p.Status || ''}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -379,8 +376,6 @@ function setupInteractions() {
   });
 
   setupSaveButton('saveTarget', 'target', 'monthly income', () => ({ TargetAmount: state.targetAmount }));
-  const saveEstBtn = document.getElementById('saveEst');
-  if (saveEstBtn) setupSaveButton('saveEst', 'est', 'monthly estimated cost', () => ({ MonthlyEstimatedCost: state.monthlyEstimatedCost }));
   setupSaveButton('saveAmt', 'amt', 'cost/income notes', () => ({ AmtDesc: state.amtDesc }));
   setupSaveButton('saveSol', 'sol', 'warnings & actions', () => ({ SolDesc: state.solDesc }));
 
