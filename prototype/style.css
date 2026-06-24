@@ -84,6 +84,41 @@ body {
 .dirty { background: #fff4e5; color: #a14a00; border: 1px solid #f0c787; }
 .clean { background: #dff6dd; color: #107c10; border: 1px solid #b6d7b6; }
 
+/* View tabs */
+.viewtabs { display: inline-flex; border: 1px solid #8a8886; border-radius: 3px; overflow: hidden; }
+.vtab {
+  height: 30px; padding: 0 12px; font-size: 12px; font-weight: 500;
+  border: none; background: #fff; color: #323130; cursor: pointer; white-space: nowrap;
+}
+.vtab + .vtab { border-left: 1px solid #d0cece; }
+.vtab:hover { background: #f3f2f1; }
+.vtab.active { background: #0078d4; color: #fff; }
+
+/* Last-3-months readonly view */
+.review-view {
+  background: #fff; margin: 12px 20px 0;
+  border: 1px solid #edebe9; border-radius: 4px; padding: 0 0 12px;
+}
+.review-head {
+  background: #faf9f8; padding: 10px 16px; border-bottom: 1px solid #edebe9;
+  font-weight: 700; color: #0078d4; border-radius: 4px 4px 0 0;
+}
+.review-note { font-weight: 400; font-size: 12px; color: #a19f9d; }
+.review-empty { padding: 24px; text-align: center; color: #a19f9d; }
+.review-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.review-table th, .review-table td {
+  padding: 8px 16px; border-bottom: 1px solid #f3f2f1; border-right: 1px solid #f3f2f1; text-align: right;
+}
+.review-table th { background: #faf9f8; font-weight: 600; color: #323130; text-align: right; }
+.review-table th:first-child, .review-table td.rl { text-align: left; color: #0078d4; font-weight: 500; }
+.review-table th:last-child, .review-table td:last-child { border-right: none; }
+.review-table td.rn { font-variant-numeric: tabular-nums; }
+.review-table tr:hover td { background: #faf9f8; }
+.review-table th.cur, .review-table td.cur { background: #eef6fc; }
+.review-desc { margin: 12px 16px 0; border: 1px solid #edebe9; border-radius: 4px; }
+.review-desc-h { background: #faf9f8; padding: 6px 12px; font-weight: 600; color: #0078d4; font-size: 13px; border-bottom: 1px solid #edebe9; }
+.review-desc-b { padding: 12px 14px; font-size: 14px; line-height: 1.85; color: #323130; }
+
 /* Month-end lock toggle */
 .lock-toggle {
   height: 28px; padding: 0 12px;

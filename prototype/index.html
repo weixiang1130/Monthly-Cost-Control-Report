@@ -8,7 +8,7 @@
 <body>
 
 <header class="banner">
-  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.10 ｜ Interaction states + HTML whitelist sanitizer (XSS)</span></div>
+  <div class="banner-title">Monthly Cost Report Prototype <span class="banner-sub">v0.11 ｜ Full PA parity: current-month edit + last-3-months review</span></div>
   <div class="banner-meta">
     <span>Data: <code>local mock JSON</code></span>
     <span>Read: <span class="ok">✓ OK</span></span>
@@ -29,12 +29,19 @@
     <span class="lbl">Month:</span>
     <select id="monthsel"></select>
   </div>
+  <div class="viewtabs">
+    <button id="tabEdit" class="vtab active">✏️ Current month</button>
+    <button id="tabReview" class="vtab">📚 Last 3 months</button>
+  </div>
   <span id="globalDirty" class="clean">✓ All saved</span>
   <button id="lockToggle" class="lock-toggle" style="display:none">🔒 Simulate month-end lock</button>
 </div>
 
 <!-- Readonly / locked banner -->
 <div id="lockBanner" class="lock-banner" style="display:none"></div>
+
+<!-- Last-3-months readonly view (mirrors PA ReadOnlyScreen) -->
+<div id="reviewView" class="review-view" style="display:none"></div>
 
 <!-- ===== Financial grid card (PA replica) ===== -->
 <div class="grid-card">

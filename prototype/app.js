@@ -21,6 +21,8 @@ const state = {
   lastSaved: { target: null, est: null, amt: null, sol: null },
   // Keys (`ProjectID|MonthEnd`) manually locked to simulate month-end close
   lockedKeys: new Set(),
+  // View mode: 'edit' (current month) | 'review' (last 3 months readonly)
+  viewMode: 'edit',
 };
 
 const fmt = {
@@ -321,6 +323,61 @@ function applyLockState() {
   }
 }
 
+// ===== Last-3-months readonly view (mirrors PA ReadOnlyScreen) =====
+function renderReview() {
+  const pid = state.currentProjectId;
+  const attr = findProjectAttr(pid);
+  const months = getMonthsForProject(pid).slice(0, 3).reverse(); // latest 3, oldest→newest
+  const el = document.getElementById('reviewView');
+  let html = `<div class="review-head">📚 Last 3 months (readonly) — ${attr ? attr.ProjectName : pid}　`
+           + `<span class="review-note">mirrors Power Apps: recent three monthly reports for comparison</span></div>`;
+  if (months.length === 0) { el.innerHTML = html + '<div class="review-empty">No month data for this project</div>'; return; }
+
+  const rows = [
+    ['Cumulative income', 'AccRealAmt'],
+    ['Cumulative cost', 'AccRealCost'],
+    ['Monthly planned cost', 'EstCost'],
+    ['Monthly actual cost (est.)', 'RealCost'],
+    ['YTD planned cost', 'YearEstCost'],
+    ['YTD actual cost', 'YearRealCost'],
+  ];
+  const curIdx = months.findIndex(m => String(m.MonthEnd).trim() === state.currentMonthEnd);
+  html += '<table class="review-table"><thead><tr><th>Item</th>';
+  months.forEach((m, i) => html += `<th class="${i === curIdx ? 'cur' : ''}">${fmt.monthShort(m.MonthEnd)}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach(([label, key]) => {
+    html += `<tr><td class="rl">${label}</td>`;
+    months.forEach((m, i) => html += `<td class="rn ${i === curIdx ? 'cur' : ''}">${fmt.num(m[key])}</td>`);
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  const curLabel = state.currentMonthEnd ? fmt.monthShort(state.currentMonthEnd) : '—';
+  html += `<div class="review-desc"><div class="review-desc-h">Cost / income notes (${curLabel})</div>`
+        + `<div class="review-desc-b">${state.amtDesc || '<i style="color:#a19f9d">(empty)</i>'}</div></div>`;
+  html += `<div class="review-desc"><div class="review-desc-h">Warnings & actions (${curLabel})</div>`
+        + `<div class="review-desc-b">${state.solDesc || '<i style="color:#a19f9d">(empty)</i>'}</div></div>`;
+  el.innerHTML = html;
+}
+
+function setViewMode(mode) {
+  state.viewMode = mode;
+  document.getElementById('tabEdit').classList.toggle('active', mode === 'edit');
+  document.getElementById('tabReview').classList.toggle('active', mode === 'review');
+  const editBlocks = document.querySelectorAll('.grid-card, .section-title, .rt-card, .pay-card, .dev-override');
+  const review = document.getElementById('reviewView');
+  const isReview = mode === 'review';
+  editBlocks.forEach(e => e.style.display = isReview ? 'none' : '');
+  review.style.display = isReview ? '' : 'none';
+  if (isReview) {
+    document.getElementById('lockBanner').style.display = 'none';
+    document.getElementById('lockToggle').style.display = 'none';
+    renderReview();
+  } else {
+    render();
+  }
+}
+
 function render() {
   const pid = state.currentProjectId;
   const attr = findProjectAttr(pid);
@@ -388,6 +445,13 @@ function render() {
 
   updateLastSavedDisplay();
   renderDevPanel(pid, monthEnd, prevMonthRow ? prevMonthRow.MonthEnd : null, prevMonthRow, monthRow, accRealAmtCalc, accRealCostCalc);
+
+  // Review mode: keep it in sync on project/month switch, and suppress edit-flow lock UI
+  if (state.viewMode === 'review') {
+    document.getElementById('lockBanner').style.display = 'none';
+    document.getElementById('lockToggle').style.display = 'none';
+    renderReview();
+  }
 }
 
 function renderPayments() {
@@ -528,6 +592,10 @@ function setupInteractions() {
   setupSaveButton('saveTarget', 'target', 'monthly income', () => ({ TargetAmount: state.targetAmount }));
   setupSaveButton('saveAmt', 'amt', 'cost/income notes', () => ({ AmtDesc: state.amtDesc }));
   setupSaveButton('saveSol', 'sol', 'warnings & actions', () => ({ SolDesc: state.solDesc }));
+
+  // View mode toggle (current month / last 3 months readonly)
+  document.getElementById('tabEdit').addEventListener('click', () => setViewMode('edit'));
+  document.getElementById('tabReview').addEventListener('click', () => setViewMode('review'));
 
   // Month-end lock toggle (simulated)
   document.getElementById('lockToggle').addEventListener('click', () => {
