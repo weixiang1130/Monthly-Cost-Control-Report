@@ -5,16 +5,16 @@
   "basis": "資料合約 v2.0 公式;對應路線圖 Phase 6 測試前置",
   "summary": {
     "總案例": 29,
-    "可自動驗證": 25,
-    "通過": 25,
-    "政策待實作(G5)": 4
+    "可自動驗證": 29,
+    "通過": 29,
+    "政策待實作(G5)": 0
   },
   "groups": {
     "G1 驗證": "本月實際收入欄位輸入驗證",
     "G2 除零": "所有比率/利潤率分母為 0 須回 0",
     "G3 累計": "跨月累計(上月基底 + 本月輸入)",
     "G4 方向": "差額正負方向(超支為正、收支差紅字)",
-    "G5 HTML清洗": "富文本寫回前 XSS 清洗驗收準則(待 Phase 5)",
+    "G5 HTML清洗": "富文本寫回前 XSS 白名單清洗(v0.10 已實作並實測)",
     "G6 鎖定/過濾": "月結鎖定/歷史唯讀/專案過濾(v0.9 已實測)"
   },
   "cases": [
@@ -226,33 +226,33 @@
       "group": "G5 HTML清洗",
       "case": "<script>alert(1)</script>投入正常",
       "expected": "移除 <script>,保留文字「投入正常」",
-      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
-      "pass": null,
-      "note": "Phase 5 寫回前必做;此為驗收準則"
+      "actual": "前端白名單 sanitizeHtml() 已實作,瀏覽器實測通過",
+      "pass": true,
+      "note": "前端第一道(v0.10);正式版後端 HtmlSanitizer 為第二道"
     },
     {
       "group": "G5 HTML清洗",
       "case": "<img src=x onerror=alert(1)>",
       "expected": "移除 onerror 事件屬性",
-      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
-      "pass": null,
-      "note": "Phase 5 寫回前必做;此為驗收準則"
+      "actual": "前端白名單 sanitizeHtml() 已實作,瀏覽器實測通過",
+      "pass": true,
+      "note": "前端第一道(v0.10);正式版後端 HtmlSanitizer 為第二道"
     },
     {
       "group": "G5 HTML清洗",
       "case": "<b>粗體</b><a href=\"javascript:evil()\">x</",
       "expected": "保留 <b>;移除 javascript: href",
-      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
-      "pass": null,
-      "note": "Phase 5 寫回前必做;此為驗收準則"
+      "actual": "前端白名單 sanitizeHtml() 已實作,瀏覽器實測通過",
+      "pass": true,
+      "note": "前端第一道(v0.10);正式版後端 HtmlSanitizer 為第二道"
     },
     {
       "group": "G5 HTML清洗",
       "case": "<p style=\"color:red\">正常富文本</p>",
       "expected": "保留(白名單內標籤/樣式)",
-      "actual": "待 HtmlSanitizer/DOMPurify 白名單實作",
-      "pass": null,
-      "note": "Phase 5 寫回前必做;此為驗收準則"
+      "actual": "前端白名單 sanitizeHtml() 已實作,瀏覽器實測通過",
+      "pass": true,
+      "note": "前端第一道(v0.10);正式版後端 HtmlSanitizer 為第二道"
     },
     {
       "group": "G6 鎖定/過濾",

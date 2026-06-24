@@ -57,6 +57,53 @@ const fmt = {
   }
 };
 
+// ===== HTML whitelist sanitizer (front-line XSS defense; production also runs server-side HtmlSanitizer) =====
+const SANITIZE = {
+  allowedTags: new Set(['P','BR','B','STRONG','I','EM','U','S','SPAN','DIV','UL','OL','LI','A','FONT','H1','H2','H3','H4','BLOCKQUOTE','IMG']),
+  dropTags: new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','LINK','META','FORM','INPUT','BUTTON','SVG','MATH','BASE']),
+  allowedAttrs: { A:['href','title','target','rel'], IMG:['src','alt','width','height'], FONT:['color','face'],
+                  SPAN:['style'], P:['style'], DIV:['style'], LI:['style'], H1:['style'], H2:['style'], H3:['style'] },
+  allowedStyle: new Set(['color','background-color','font-weight','font-style','text-decoration','text-align','margin','margin-left','margin-bottom','padding-left']),
+};
+function _safeUrl(u){ u=(u||'').trim(); return /^(javascript|vbscript|file|data):/i.test(u) ? null : u; }
+function _safeImg(u){ u=(u||'').trim(); return (/^data:image\//i.test(u) || /^https?:\/\//i.test(u)) ? u : null; }
+function _cleanStyle(s){
+  return (s||'').split(';').map(d=>d.trim()).filter(Boolean).filter(d=>{
+    const p=d.split(':')[0].trim().toLowerCase(), v=d.slice(d.indexOf(':')+1).toLowerCase();
+    return SANITIZE.allowedStyle.has(p) && !/url\(|expression\(|javascript:/i.test(v);
+  }).join('; ');
+}
+function _cleanAttrs(el){
+  [...el.attributes].forEach(a=>{
+    const name=a.name.toLowerCase(), allowed=SANITIZE.allowedAttrs[el.tagName]||[];
+    if (name.startsWith('on') || !allowed.includes(name)) { el.removeAttribute(a.name); return; }
+    if (name==='href'){ const s=_safeUrl(a.value); s===null?el.removeAttribute(a.name):el.setAttribute('href',s); }
+    else if (name==='src'){ const s=_safeImg(a.value); if(s===null) el.remove(); else el.setAttribute('src',s); }
+    else if (name==='style'){ const s=_cleanStyle(a.value); s?el.setAttribute('style',s):el.removeAttribute('style'); }
+  });
+}
+function _sanitizeFragment(root){
+  [...root.childNodes].forEach(child=>{
+    if (child.nodeType === 8){ child.remove(); return; }
+    if (child.nodeType !== 1) return;
+    const tag = child.tagName;
+    if (SANITIZE.dropTags.has(tag)){ child.remove(); return; }
+    if (!SANITIZE.allowedTags.has(tag)){
+      _sanitizeFragment(child);
+      while (child.firstChild) root.insertBefore(child.firstChild, child);
+      child.remove(); return;
+    }
+    _cleanAttrs(child);
+    _sanitizeFragment(child);
+  });
+}
+function sanitizeHtml(html){
+  const tpl = document.createElement('template');
+  tpl.innerHTML = String(html == null ? '' : html);
+  _sanitizeFragment(tpl.content);
+  return tpl.innerHTML;
+}
+
 function findProjectAttr(projectId) {
   return DATA.projects.find(p => String(p.ProjectID).trim() === projectId);
 }
@@ -503,6 +550,16 @@ function setupSaveButton(btnId, field, label, payloadFn) {
   const btn = document.getElementById(btnId);
   btn.addEventListener('click', () => {
     if (!state.dirty[field]) { showToast(`No changes for "${label}"`, true); return; }
+    // Rich-text fields: sanitize HTML before saving (front-line XSS defense)
+    if (field === 'amt' || field === 'sol') {
+      const k = field === 'amt' ? 'amtDesc' : 'solDesc';
+      const cleaned = sanitizeHtml(state[k]);
+      if (cleaned !== state[k]) {
+        state[k] = cleaned;
+        document.getElementById(k).innerHTML = cleaned;
+        showToast('⚠ Removed unsafe HTML content (XSS protection)', true);
+      }
+    }
     const original = btn.innerHTML;
     btn.disabled = true; btn.innerHTML = '⌛ Saving...';
     setTimeout(() => {
