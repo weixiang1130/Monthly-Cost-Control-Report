@@ -1,0 +1,696 @@
+{
+  "title": "成控月報 資料合約 (Data Contract)",
+  "version": "2.0",
+  "date": "2026-06-24",
+  "supersedes": "BI-成控月報_欄位對照與UI驗證_v1.0 (2026-06-17)",
+  "changeNote": "納入 2026-06-22~24 對齊 Power Apps 的公式修正(收入/投入累計、年度投入差方向、本月達成率、累計投入%)、確認寫回表 12 欄、新增 MonthlyEstimatedCost 自動讀取欄、付款 view 改名、專案狀態過濾。",
+  "dataSources": {
+    "attr": {
+      "object": "ProjectAttr",
+      "key": [
+        "ProjectID"
+      ],
+      "access": "SELECT ✅"
+    },
+    "month": {
+      "object": "ProjectMonthlySummary",
+      "key": [
+        "ProjectID",
+        "MonthEnd"
+      ],
+      "access": "SELECT ✅"
+    },
+    "pay": {
+      "object": "PaymentDetail",
+      "key": [
+        "PayNo"
+      ],
+      "access": "SELECT ✅"
+    },
+    "subcon": {
+      "object": "SubcontractMonthlySnapshot",
+      "key": [
+        "ProjectID",
+        "MonthEnd"
+      ],
+      "access": "❌ 待 IT 授權 SELECT"
+    },
+    "write": {
+      "object": "MonthlyReportDesc",
+      "key": [
+        "ProjectID",
+        "MonthEnd"
+      ],
+      "access": "SELECT/INSERT/UPDATE/DELETE ✅"
+    }
+  },
+  "writeBackSchema": [
+    {
+      "col": "ProjectID",
+      "type": "nvarchar(10)",
+      "nullable": false,
+      "default": null,
+      "note": "PK,查詢鍵"
+    },
+    {
+      "col": "MonthEnd",
+      "type": "char(10)",
+      "nullable": false,
+      "default": null,
+      "note": "PK,yyyy/MM/dd"
+    },
+    {
+      "col": "AmtDesc",
+      "type": "nvarchar(MAX)",
+      "nullable": true,
+      "default": null,
+      "note": "投入與收入說明 HTML(寫前須 sanitize)"
+    },
+    {
+      "col": "SolDesc",
+      "type": "nvarchar(MAX)",
+      "nullable": true,
+      "default": null,
+      "note": "警示及具體做法 HTML(寫前須 sanitize)"
+    },
+    {
+      "col": "TargetAmount",
+      "type": "float",
+      "nullable": false,
+      "default": "0",
+      "note": "本月實際收入(使用者輸入)"
+    },
+    {
+      "col": "Active",
+      "type": "bit",
+      "nullable": false,
+      "default": "1",
+      "note": "軟刪除旗標"
+    },
+    {
+      "col": "CreateDate",
+      "type": "datetime",
+      "nullable": false,
+      "default": "getdate()",
+      "note": ""
+    },
+    {
+      "col": "CreateUserID",
+      "type": "varchar",
+      "nullable": true,
+      "default": null,
+      "note": "SSO 帶入"
+    },
+    {
+      "col": "CreateUserName",
+      "type": "nvarchar",
+      "nullable": true,
+      "default": null,
+      "note": "SSO 帶入"
+    },
+    {
+      "col": "UpdDate",
+      "type": "datetime",
+      "nullable": false,
+      "default": null,
+      "note": "⚠ 實際 NOT NULL 無 default,INSERT/UPDATE 都要帶 GETDATE()"
+    },
+    {
+      "col": "UpdUserID",
+      "type": "varchar",
+      "nullable": true,
+      "default": null,
+      "note": ""
+    },
+    {
+      "col": "UpdUserName",
+      "type": "nvarchar",
+      "nullable": true,
+      "default": null,
+      "note": ""
+    }
+  ],
+  "projectFilter": {
+    "rule": "排除 ProjectStatus 含『結算』或『結案』",
+    "knownValues": [
+      "執行中",
+      "預算未鎖檔",
+      "已結算(排除)"
+    ]
+  },
+  "fields": [
+    {
+      "section": "基本",
+      "key": "MonthEnd",
+      "label": "當月最後一天",
+      "kind": "read",
+      "col": "MonthEnd",
+      "type": "string",
+      "fmt": "yyyy/MM/dd→yyyy-MM",
+      "editable": false,
+      "source": "ProjectMonthlySummary"
+    },
+    {
+      "section": "基本",
+      "key": "ProjectID",
+      "label": "專案代碼",
+      "kind": "read",
+      "col": "ProjectID",
+      "type": "string",
+      "fmt": "原文",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "基本",
+      "key": "ProjectName",
+      "label": "專案簡稱",
+      "kind": "read",
+      "col": "ProjectName",
+      "type": "string",
+      "fmt": "原文",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "基本",
+      "key": "ProjectStatus",
+      "label": "專案狀態",
+      "kind": "read",
+      "col": "ProjectStatus",
+      "type": "string",
+      "fmt": "原文",
+      "editable": false,
+      "notes": "過濾用;含『結算/結案』者不列入下拉",
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "基本",
+      "key": "ExpStartDate",
+      "label": "預定開工日",
+      "kind": "read",
+      "col": "ExpStartDate",
+      "type": "date",
+      "fmt": "yyyy/MM/dd",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "基本",
+      "key": "ExpEndDate",
+      "label": "預定完工日",
+      "kind": "read",
+      "col": "ExpEndDate",
+      "type": "date",
+      "fmt": "yyyy/MM/dd",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "基本",
+      "key": "ExtentionEndDate",
+      "label": "展延後完工日",
+      "kind": "read",
+      "col": "ExtentionEndDate",
+      "type": "date",
+      "fmt": "yyyy/MM/dd",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "總覽",
+      "key": "ContractAmt",
+      "label": "原始業主來價",
+      "kind": "read",
+      "col": "ContractAmt",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "總覽",
+      "key": "BudgetAmt",
+      "label": "原始執行預算",
+      "kind": "read",
+      "col": "BudgetAmt",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "總覽",
+      "key": "OriginalProfitRate",
+      "label": "原始利潤率",
+      "kind": "computed",
+      "type": "percent",
+      "fmt": "0.00%",
+      "editable": false,
+      "formula": "(ContractAmt - BudgetAmt) / ContractAmt",
+      "deps": [
+        "ContractAmt",
+        "BudgetAmt"
+      ],
+      "notes": "分母 0 回 0"
+    },
+    {
+      "section": "總覽",
+      "key": "ContractRevisedAmt",
+      "label": "核定修正業主來價",
+      "kind": "read",
+      "col": "ContractRevisedAmt",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "總覽",
+      "key": "BudgetRevisedAmt",
+      "label": "核定預算修正",
+      "kind": "read",
+      "col": "BudgetRevisedAmt",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectAttr"
+    },
+    {
+      "section": "總覽",
+      "key": "RevisedProfitRate",
+      "label": "修正利潤率",
+      "kind": "computed",
+      "type": "percent",
+      "fmt": "0.00%",
+      "editable": false,
+      "formula": "(ContractRevisedAmt - BudgetRevisedAmt) / ContractRevisedAmt",
+      "deps": [
+        "ContractRevisedAmt",
+        "BudgetRevisedAmt"
+      ],
+      "notes": "分母 0 回 0"
+    },
+    {
+      "section": "總覽",
+      "key": "PrevAccRealAmt",
+      "label": "上月專案累計實際收入(基底)",
+      "kind": "read",
+      "col": "AccRealAmt",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "notes": "查『上一個月同專案』的 AccRealAmt 作為累計基底",
+      "source": "ProjectMonthlySummary"
+    },
+    {
+      "section": "總覽",
+      "key": "DisplayAccRealAmt",
+      "label": "專案累計實際收入",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "PrevAccRealAmt + TargetAmount",
+      "deps": [
+        "PrevAccRealAmt",
+        "TargetAmount"
+      ],
+      "notes": "★對齊 PA:上月 AccRealAmt + 本月使用者輸入 TargetAmount(不直接讀本月 AccRealAmt)"
+    },
+    {
+      "section": "總覽",
+      "key": "AccRealCost",
+      "label": "本月專案累計實際投入(基底)",
+      "kind": "read",
+      "col": "AccRealCost",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectMonthlySummary"
+    },
+    {
+      "section": "總覽",
+      "key": "DisplayAccRealCost",
+      "label": "專案累計實際投入",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "AccRealCost + MonthlyEstimatedCost",
+      "deps": [
+        "AccRealCost",
+        "MonthlyEstimatedCost"
+      ],
+      "notes": "★對齊 PA:本月 AccRealCost + 本月投入預估"
+    },
+    {
+      "section": "總覽",
+      "key": "AccRealDiff",
+      "label": "專案累計收支差",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0;[Red]-#,##0",
+      "editable": false,
+      "formula": "DisplayAccRealAmt - DisplayAccRealCost",
+      "deps": [
+        "DisplayAccRealAmt",
+        "DisplayAccRealCost"
+      ]
+    },
+    {
+      "section": "總覽",
+      "key": "YearEstCost",
+      "label": "年度累計預定投入",
+      "kind": "read",
+      "col": "YearEstCost",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectMonthlySummary"
+    },
+    {
+      "section": "總覽",
+      "key": "YearRealCost",
+      "label": "年度累計實際投入(基底)",
+      "kind": "read",
+      "col": "YearRealCost",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectMonthlySummary"
+    },
+    {
+      "section": "總覽",
+      "key": "DisplayYearRealCost",
+      "label": "年度累計實際投入",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "YearRealCost + MonthlyEstimatedCost",
+      "deps": [
+        "YearRealCost",
+        "MonthlyEstimatedCost"
+      ]
+    },
+    {
+      "section": "總覽",
+      "key": "YearCostDiff",
+      "label": "年度投入差",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0;[Red]-#,##0",
+      "editable": false,
+      "formula": "DisplayYearRealCost - YearEstCost",
+      "deps": [
+        "DisplayYearRealCost",
+        "YearEstCost"
+      ],
+      "notes": "★方向修正:超支為正(顯示年度累計投入 − 年度預定投入)"
+    },
+    {
+      "section": "總覽",
+      "key": "EstCost",
+      "label": "本月預定投入",
+      "kind": "read",
+      "col": "EstCost",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "ProjectMonthlySummary"
+    },
+    {
+      "section": "總覽",
+      "key": "MonthlyEstimatedCost",
+      "label": "本月實際投入(預估)",
+      "kind": "autoread",
+      "col": "(待 IT 提供計算欄)",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "notes": "★非使用者輸入!月初從小包計價快照自動算。權限未開前原型暫以參考值帶入",
+      "source": "SubcontractMonthlySnapshot"
+    },
+    {
+      "section": "總覽",
+      "key": "MonthAchieveRate",
+      "label": "本月達成率",
+      "kind": "computed",
+      "type": "percent",
+      "fmt": "0.00%",
+      "editable": false,
+      "formula": "MonthlyEstimatedCost / EstCost",
+      "deps": [
+        "MonthlyEstimatedCost",
+        "EstCost"
+      ],
+      "notes": "★修正:原誤用 YearCostExecRate"
+    },
+    {
+      "section": "總覽",
+      "key": "DisplayAccRealCostRate",
+      "label": "累計投入(%)",
+      "kind": "computed",
+      "type": "percent",
+      "fmt": "0.00%",
+      "editable": false,
+      "formula": "DisplayAccRealCost / BudgetRevisedAmt",
+      "deps": [
+        "DisplayAccRealCost",
+        "BudgetRevisedAmt"
+      ],
+      "notes": "★以顯示累計投入重算,非直接讀 AccRealCostRate"
+    },
+    {
+      "section": "月報填寫",
+      "key": "TargetAmount",
+      "label": "本月實際收入",
+      "kind": "editable",
+      "col": "TargetAmount",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": true,
+      "writeTarget": "write.TargetAmount",
+      "validation": {
+        "required": false,
+        "rule": "整數 >= 0",
+        "checks": [
+          "number",
+          "integer",
+          "min:0"
+        ]
+      },
+      "source": "MonthlyReportDesc"
+    },
+    {
+      "section": "月報填寫",
+      "key": "AmtDesc",
+      "label": "投入與收入說明",
+      "kind": "editable",
+      "col": "AmtDesc",
+      "type": "html",
+      "fmt": "富文本",
+      "editable": true,
+      "writeTarget": "write.AmtDesc",
+      "validation": {
+        "required": false,
+        "rule": "HTML,寫前 sanitize"
+      },
+      "notes": "歷史內容僅在 SharePoint,待遷移",
+      "source": "MonthlyReportDesc"
+    },
+    {
+      "section": "月報填寫",
+      "key": "SolDesc",
+      "label": "警示及具體做法",
+      "kind": "editable",
+      "col": "SolDesc",
+      "type": "html",
+      "fmt": "富文本",
+      "editable": true,
+      "writeTarget": "write.SolDesc",
+      "validation": {
+        "required": false,
+        "rule": "HTML,寫前 sanitize"
+      },
+      "notes": "同上",
+      "source": "MonthlyReportDesc"
+    },
+    {
+      "section": "付款明細",
+      "key": "ContractName",
+      "label": "合約名稱",
+      "kind": "read",
+      "col": "ContractName",
+      "type": "string",
+      "fmt": "原文",
+      "editable": false,
+      "source": "PaymentDetail"
+    },
+    {
+      "section": "付款明細",
+      "key": "VendorName",
+      "label": "廠商名稱",
+      "kind": "read",
+      "col": "VendorName",
+      "type": "string",
+      "fmt": "原文",
+      "editable": false,
+      "source": "PaymentDetail"
+    },
+    {
+      "section": "付款明細",
+      "key": "Amount",
+      "label": "計價金額",
+      "kind": "read",
+      "col": "Amount",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "source": "PaymentDetail"
+    },
+    {
+      "section": "付款明細",
+      "key": "PayPhase",
+      "label": "計價期別",
+      "kind": "read",
+      "col": "PayPhase",
+      "type": "string",
+      "fmt": "原文",
+      "editable": false,
+      "source": "PaymentDetail"
+    },
+    {
+      "section": "付款明細",
+      "key": "PayDate",
+      "label": "計價日期",
+      "kind": "read",
+      "col": "PayDate",
+      "type": "date",
+      "fmt": "民國年→西元",
+      "editable": false,
+      "notes": "民國年字串如 113-12-24",
+      "source": "PaymentDetail"
+    },
+    {
+      "section": "付款彙總",
+      "key": "MonthlyBillingCount",
+      "label": "當月計價件數(基底)",
+      "kind": "computed",
+      "type": "int",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "COUNT(該專案該月計價)",
+      "deps": []
+    },
+    {
+      "section": "付款彙總",
+      "key": "MonthlyBillingAmount",
+      "label": "當月計價總額(基底)",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "SUM(Amount, 該專案該月)",
+      "deps": [
+        "Amount"
+      ]
+    },
+    {
+      "section": "付款彙總",
+      "key": "MonthlyPaymentCount",
+      "label": "當月專案付款件數",
+      "kind": "computed",
+      "type": "int",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "COUNT(該專案該月 AND IsPay=true)",
+      "deps": []
+    },
+    {
+      "section": "付款彙總",
+      "key": "MonthlyPaymentAmount",
+      "label": "當月專案付款金額",
+      "kind": "computed",
+      "type": "money",
+      "fmt": "#,##0",
+      "editable": false,
+      "formula": "SUM(Amount, 該專案該月 AND IsPay=true)",
+      "deps": [
+        "Amount"
+      ]
+    },
+    {
+      "section": "付款彙總",
+      "key": "MonthlyPaymentRatio",
+      "label": "當月專案付款比例",
+      "kind": "computed",
+      "type": "percent",
+      "fmt": "0.00%",
+      "editable": false,
+      "formula": "MonthlyPaymentCount / MonthlyBillingCount",
+      "deps": [
+        "MonthlyPaymentCount",
+        "MonthlyBillingCount"
+      ],
+      "notes": "分母 0 回 0"
+    },
+    {
+      "section": "付款彙總",
+      "key": "MonthlyPaymentAmountRatio",
+      "label": "當月專案付款金額比例",
+      "kind": "computed",
+      "type": "percent",
+      "fmt": "0.00%",
+      "editable": false,
+      "formula": "MonthlyPaymentAmount / MonthlyBillingAmount",
+      "deps": [
+        "MonthlyPaymentAmount",
+        "MonthlyBillingAmount"
+      ],
+      "notes": "分母 0 回 0"
+    }
+  ],
+  "lockModel": {
+    "states": [
+      {
+        "state": "Editable",
+        "desc": "當月、未月結",
+        "editable": true,
+        "by": "填報人"
+      },
+      {
+        "state": "Locked",
+        "desc": "月結後該月唯讀",
+        "editable": false,
+        "by": "管理員"
+      },
+      {
+        "state": "Unlocked",
+        "desc": "管理員退回可編輯(例外)",
+        "editable": true,
+        "by": "管理員"
+      }
+    ],
+    "prototypeRule": "比照 PA:僅最新月份可填;歷史月份唯讀。月結鎖定欄位待 IT 提供(原型以模擬切換呈現)。"
+  },
+  "roles": [
+    {
+      "role": "Editor 填報人",
+      "perm": "填寫/儲存自己負責專案的當月月報"
+    },
+    {
+      "role": "Admin 管理員",
+      "perm": "全部專案檢視 + 月結/解鎖 + 權限管理"
+    }
+  ],
+  "openIssues": [
+    "投入預估來源 view 的 SELECT 權限(MonthlyEstimatedCost) — IT回填單【1】",
+    "兩段 HTML 歷史敘述遷移(僅在 SharePoint) — IT回填單【2】",
+    "SSO/AD 認證 → 稽核欄位 Create/UpdUserID — IT回填單【3】",
+    "專案分權資料源 — IT回填單【4】",
+    "月結鎖定狀態欄位 — IT回填單【5】",
+    "資料同步時效 — IT回填單【6】"
+  ]
+}
