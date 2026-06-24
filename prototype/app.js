@@ -19,6 +19,8 @@ const state = {
   solDesc: '',
   dirty: { target: false, est: false, amt: false, sol: false },
   lastSaved: { target: null, est: null, amt: null, sol: null },
+  // Keys (`ProjectID|MonthEnd`) manually locked to simulate month-end close
+  lockedKeys: new Set(),
 };
 
 const fmt = {
@@ -57,6 +59,15 @@ const fmt = {
 
 function findProjectAttr(projectId) {
   return DATA.projects.find(p => String(p.ProjectID).trim() === projectId);
+}
+
+// Show only active projects (exclude settled/closed). Real BI snapshot statuses
+// are "執行中 / 預算未鎖檔 / 已結算"; treat any "結算/結案" status as closed.
+function getActiveProjects() {
+  return DATA.projects.filter(p => {
+    const s = String(p.ProjectStatus || '').trim();
+    return !s.includes('結算') && !s.includes('結案');
+  });
 }
 function getMonthsForProject(projectId) {
   return DATA.months
@@ -112,7 +123,7 @@ function computeYearRealCostDisplay(monthRow, monthlyEstCost) {
 function renderProjectMenu() {
   const menu = document.getElementById('projmenu');
   menu.innerHTML = '';
-  DATA.projects.forEach(p => {
+  getActiveProjects().forEach(p => {
     const div = document.createElement('div');
     div.className = 'item';
     if (p.ProjectID === state.currentProjectId) div.classList.add('sel');
@@ -181,6 +192,88 @@ function loadEditableState() {
   updateDirtyTags();
 }
 
+// ===== Lock / readonly / validation =====
+// Mirrors Power Apps: only the latest month is editable; older months are
+// readonly; the current month can also be locked to simulate month-end close.
+function isLatestMonth(projectId, monthEnd) {
+  const months = getMonthsForProject(projectId);
+  return months.length > 0 && String(months[0].MonthEnd).trim() === monthEnd;
+}
+function lockKey() { return `${state.currentProjectId}|${state.currentMonthEnd}`; }
+function isManuallyLocked() { return state.lockedKeys.has(lockKey()); }
+function isEditableNow() {
+  return isLatestMonth(state.currentProjectId, state.currentMonthEnd) && !isManuallyLocked();
+}
+
+// Monthly income validation: empty allowed (optional); else non-negative integer
+function validateTarget() {
+  const raw = document.getElementById('targetAmount').value;
+  if (raw === '' || raw == null) return { ok: true, msg: '' };
+  const n = Number(raw);
+  if (isNaN(n)) return { ok: false, msg: 'Enter a number' };
+  if (n < 0) return { ok: false, msg: 'Cannot be negative' };
+  if (!Number.isInteger(n)) return { ok: false, msg: 'Enter an integer' };
+  return { ok: true, msg: '' };
+}
+function refreshTargetValidation() {
+  const v = validateTarget();
+  const input = document.getElementById('targetAmount');
+  const err = document.getElementById('errTarget');
+  input.classList.toggle('invalid', !v.ok);
+  err.style.display = v.ok ? 'none' : '';
+  err.textContent = v.msg;
+  const save = document.getElementById('saveTarget');
+  if (save) save.disabled = !isEditableNow() || !v.ok;
+  return v.ok;
+}
+
+function applyLockState() {
+  const editable = isEditableNow();
+  const latest = isLatestMonth(state.currentProjectId, state.currentMonthEnd);
+  const lockedManual = isManuallyLocked();
+
+  const target = document.getElementById('targetAmount');
+  const est = document.getElementById('monthlyEstimatedCost');
+  if (target) target.disabled = !editable;
+  if (est) est.disabled = !editable;
+
+  ['amtDesc', 'solDesc'].forEach(id => {
+    const body = document.getElementById(id);
+    if (!body) return;
+    body.setAttribute('contenteditable', editable ? 'true' : 'false');
+    body.classList.toggle('readonly', !editable);
+    const rt = body.closest('.rt');
+    if (rt) rt.classList.toggle('readonly', !editable);
+  });
+
+  ['saveTarget', 'saveAmt', 'saveSol'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = !editable;
+  });
+
+  const toggle = document.getElementById('lockToggle');
+  if (latest) {
+    toggle.style.display = '';
+    toggle.textContent = lockedManual ? '🔓 Unlock month-end' : '🔒 Simulate month-end lock';
+    toggle.classList.toggle('locked', lockedManual);
+  } else {
+    toggle.style.display = 'none';
+  }
+
+  const banner = document.getElementById('lockBanner');
+  if (!latest) {
+    banner.style.display = '';
+    banner.className = 'lock-banner history';
+    banner.textContent = '📖 Historical month — readonly (only the latest month is editable, mirroring Power Apps)';
+  } else if (lockedManual) {
+    banner.style.display = '';
+    banner.className = 'lock-banner locked';
+    banner.textContent = '🔒 This month is locked (month-end close) — readonly. Click “Unlock month-end” to edit.';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 function render() {
   const pid = state.currentProjectId;
   const attr = findProjectAttr(pid);
@@ -230,12 +323,22 @@ function render() {
   const accCostRate = budgetRev > 0 ? accRealCostCalc / budgetRev : 0;
   document.getElementById('kpiAccCostRate').textContent = monthRow ? fmt.pct(accCostRate) : '—';
 
-  document.getElementById('targetAmount').value = state.targetAmount || '';
-  document.getElementById('monthlyEstimatedCost').value = state.monthlyEstimatedCost || '';
-  document.getElementById('amtDesc').innerHTML = state.amtDesc;
-  document.getElementById('solDesc').innerHTML = state.solDesc;
+  // Do not overwrite the field currently being edited (preserves decimals / mid-typing)
+  const targetEl = document.getElementById('targetAmount');
+  if (document.activeElement !== targetEl) targetEl.value = state.targetAmount || '';
+  const estEl = document.getElementById('monthlyEstimatedCost');
+  if (estEl && document.activeElement !== estEl) estEl.value = state.monthlyEstimatedCost || '';
+  const amtEl = document.getElementById('amtDesc');
+  if (document.activeElement !== amtEl) amtEl.innerHTML = state.amtDesc;
+  const solEl = document.getElementById('solDesc');
+  if (document.activeElement !== solEl) solEl.innerHTML = state.solDesc;
 
   renderPayments();
+
+  // Lock / readonly state + field validation
+  applyLockState();
+  refreshTargetValidation();
+
   updateLastSavedDisplay();
   renderDevPanel(pid, monthEnd, prevMonthRow ? prevMonthRow.MonthEnd : null, prevMonthRow, monthRow, accRealAmtCalc, accRealCostCalc);
 }
@@ -378,6 +481,18 @@ function setupInteractions() {
   setupSaveButton('saveTarget', 'target', 'monthly income', () => ({ TargetAmount: state.targetAmount }));
   setupSaveButton('saveAmt', 'amt', 'cost/income notes', () => ({ AmtDesc: state.amtDesc }));
   setupSaveButton('saveSol', 'sol', 'warnings & actions', () => ({ SolDesc: state.solDesc }));
+
+  // Month-end lock toggle (simulated)
+  document.getElementById('lockToggle').addEventListener('click', () => {
+    const key = lockKey();
+    if (state.lockedKeys.has(key)) {
+      state.lockedKeys.delete(key);
+    } else {
+      if (hasAnyDirty() && !confirm('You have unsaved changes; locking makes this month readonly. Continue?')) return;
+      state.lockedKeys.add(key);
+    }
+    render();
+  });
 
   document.querySelector('.devpanel-h').addEventListener('click', () => {
     document.getElementById('devpanel').classList.toggle('collapsed');

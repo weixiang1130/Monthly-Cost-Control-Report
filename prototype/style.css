@@ -84,6 +84,42 @@ body {
 .dirty { background: #fff4e5; color: #a14a00; border: 1px solid #f0c787; }
 .clean { background: #dff6dd; color: #107c10; border: 1px solid #b6d7b6; }
 
+/* Month-end lock toggle */
+.lock-toggle {
+  height: 28px; padding: 0 12px;
+  font-size: 12px; font-weight: 500;
+  border: 1px solid #8a8886; background: #fff; color: #323130;
+  border-radius: 2px; cursor: pointer; white-space: nowrap;
+}
+.lock-toggle:hover { background: #f3f2f1; }
+.lock-toggle.locked { background: #fde7e9; border-color: #d13438; color: #a4262c; }
+
+/* Readonly / locked banner */
+.lock-banner {
+  margin: 12px 20px 0;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.lock-banner.locked { background: #fde7e9; color: #a4262c; border: 1px solid #f3c9cc; }
+.lock-banner.history { background: #fff4ce; color: #7a5d00; border: 1px solid #f0d98a; }
+
+/* Readonly state for inputs / editors */
+.income-cell input:disabled,
+.dev-override-body input:disabled { background: #f3f2f1; color: #a19f9d; cursor: not-allowed; }
+.rt-body.readonly { background: #faf9f8; color: #605e5c; cursor: default; }
+.rt.readonly .rt-tool { opacity: 0.45; pointer-events: none; }
+
+/* Field validation error */
+.field-error {
+  font-size: 11px; font-weight: 500;
+  background: #fde7e9; color: #a4262c;
+  border: 1px solid #f3c9cc;
+  padding: 2px 8px; border-radius: 10px;
+}
+.income-cell input.invalid { border-color: #d13438; box-shadow: 0 0 0 1px #d13438; }
+
 /* ===== Financial grid card (PA main body) ===== */
 .grid-card {
   background: #fff;
