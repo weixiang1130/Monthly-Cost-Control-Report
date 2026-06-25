@@ -14,15 +14,16 @@ window.APP_DATA = (() => {
     { ProjectID: "P010", ProjectName: "Project Kappa — Sample Bridge",      ProjectStatus: "執行中",   DeptName: "Dept-B", ExpStartDate: "2025-03-01", ExpEndDate: "2028-12-31", ExtentionEndDate: null,         ContractAmt: 3200000000, ContractRevisedAmt: 3200000000, BudgetAmt: 2600000000, BudgetRevisedAmt: 2600000000 },
   ];
 
-  // 為每個專案產生 12 個月的月報歷史(累計值合理遞增)
+  // 為每個專案產生最近 12 個月的月報歷史(結束於當前月,讓畫面預設停在當月)
   const months = [];
+  const now = new Date();
   projects.forEach(p => {
     let accRealAmt = 0, accRealCost = 0, yearRealCost = 0;
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(2024 + Math.floor(i / 12), (i % 12), 0);
-      d.setMonth(d.getMonth() + 1); d.setDate(0); // last day of month
+    for (let i = 11; i >= 0; i--) {                                      // 舊→新:當月-11 ... 當月
+      const d = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);  // (當月 - i) 的最後一天
       const MonthEnd = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-      const seed = (parseInt(p.ProjectID.replace('P','')) * 1000 + i);
+      const mi = 11 - i;                                                 // 月份序(0=最舊 .. 11=當月)
+      const seed = (parseInt(p.ProjectID.replace('P','')) * 1000 + mi);
       const realAmt = Math.round((30 + (seed % 50)) * 1000000);
       const realCost = Math.round((28 + (seed % 40)) * 1000000);
       accRealAmt += realAmt;

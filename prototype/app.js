@@ -202,8 +202,7 @@ function renderMonthSelector() {
 function switchProject(pid) {
   if (hasAnyDirty() && !confirm('Discard unsaved changes and switch project?')) return;
   state.currentProjectId = pid;
-  const months = getMonthsForProject(pid);
-  state.currentMonthEnd = months.length > 0 ? months[0].MonthEnd : null;
+  state.currentMonthEnd = defaultMonthFor(pid); // default to current calendar month (mirrors PA)
   loadEditableState();
   renderMonthSelector();
   render();
@@ -242,16 +241,40 @@ function loadEditableState() {
 }
 
 // ===== Lock / readonly / validation =====
-// Mirrors Power Apps: only the latest month is editable; older months are
-// readonly; the current month can also be locked to simulate month-end close.
-function isLatestMonth(projectId, monthEnd) {
-  const months = getMonthsForProject(projectId);
-  return months.length > 0 && String(months[0].MonthEnd).trim() === monthEnd;
+// Mirrors Power Apps: editability is keyed to the CURRENT calendar month
+// (EOMonth(today,0)); other months (past or future) are readonly; the current
+// month can also be locked to simulate month-end close.
+function currentMonthEnd() {
+  const d = new Date();
+  const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return `${last.getFullYear()}/${String(last.getMonth()+1).padStart(2,'0')}/${String(last.getDate()).padStart(2,'0')}`;
+}
+// Recent three month-ends incl. current (EOMonth -2..0), oldest→newest
+function recentThreeMonthEnds() {
+  const d = new Date(); const out = [];
+  for (let i = 2; i >= 0; i--) {
+    const last = new Date(d.getFullYear(), d.getMonth() - i + 1, 0);
+    out.push(`${last.getFullYear()}/${String(last.getMonth()+1).padStart(2,'0')}/${String(last.getDate()).padStart(2,'0')}`);
+  }
+  return out;
+}
+function isCurrentMonth(monthEnd) { return monthEnd === currentMonthEnd(); }
+// Default month when opening a project: prefer current month; else latest month
+// not after current; else earliest (when all data months are in the future).
+function defaultMonthFor(projectId) {
+  const months = getMonthsForProject(projectId); // DESC
+  if (months.length === 0) return null;
+  const cm = currentMonthEnd();
+  const exact = months.find(m => String(m.MonthEnd).trim() === cm);
+  if (exact) return exact.MonthEnd;
+  const notFuture = months.find(m => String(m.MonthEnd).trim() <= cm);
+  if (notFuture) return notFuture.MonthEnd;
+  return months[months.length - 1].MonthEnd;
 }
 function lockKey() { return `${state.currentProjectId}|${state.currentMonthEnd}`; }
 function isManuallyLocked() { return state.lockedKeys.has(lockKey()); }
 function isEditableNow() {
-  return isLatestMonth(state.currentProjectId, state.currentMonthEnd) && !isManuallyLocked();
+  return isCurrentMonth(state.currentMonthEnd) && !isManuallyLocked();
 }
 
 // Monthly income validation: empty allowed (optional); else non-negative integer
@@ -278,7 +301,7 @@ function refreshTargetValidation() {
 
 function applyLockState() {
   const editable = isEditableNow();
-  const latest = isLatestMonth(state.currentProjectId, state.currentMonthEnd);
+  const isCur = isCurrentMonth(state.currentMonthEnd);
   const lockedManual = isManuallyLocked();
 
   const target = document.getElementById('targetAmount');
@@ -301,7 +324,7 @@ function applyLockState() {
   });
 
   const toggle = document.getElementById('lockToggle');
-  if (latest) {
+  if (isCur) {
     toggle.style.display = '';
     toggle.textContent = lockedManual ? '🔓 Unlock month-end' : '🔒 Simulate month-end lock';
     toggle.classList.toggle('locked', lockedManual);
@@ -310,10 +333,14 @@ function applyLockState() {
   }
 
   const banner = document.getElementById('lockBanner');
-  if (!latest) {
+  const curLabel = fmt.monthShort(currentMonthEnd());
+  if (!isCur) {
+    const isFuture = String(state.currentMonthEnd) > currentMonthEnd();
     banner.style.display = '';
     banner.className = 'lock-banner history';
-    banner.textContent = '📖 Historical month — readonly (only the latest month is editable, mirroring Power Apps)';
+    banner.textContent = isFuture
+      ? `🔮 Future month — readonly (reporting period not yet reached; only the current month ${curLabel} is editable)`
+      : `📖 Historical month — readonly (only the current month ${curLabel} is editable, mirroring Power Apps)`;
   } else if (lockedManual) {
     banner.style.display = '';
     banner.className = 'lock-banner locked';
@@ -327,11 +354,12 @@ function applyLockState() {
 function renderReview() {
   const pid = state.currentProjectId;
   const attr = findProjectAttr(pid);
-  const months = getMonthsForProject(pid).slice(0, 3).reverse(); // latest 3, oldest→newest
+  const mEnds = recentThreeMonthEnds();              // current-month-based recent 3 (incl. current), oldest→newest
+  const monthRows = mEnds.map(me => findMonthRow(pid, me)); // may be null if month absent
+  const cm = currentMonthEnd();
   const el = document.getElementById('reviewView');
   let html = `<div class="review-head">📚 Last 3 months (readonly) — ${attr ? attr.ProjectName : pid}　`
-           + `<span class="review-note">mirrors Power Apps: recent three monthly reports for comparison</span></div>`;
-  if (months.length === 0) { el.innerHTML = html + '<div class="review-empty">No month data for this project</div>'; return; }
+           + `<span class="review-note">based on current month ${fmt.monthShort(cm)}: prior two months + current (mirrors Power Apps)</span></div>`;
 
   const rows = [
     ['Cumulative income', 'AccRealAmt'],
@@ -341,18 +369,17 @@ function renderReview() {
     ['YTD planned cost', 'YearEstCost'],
     ['YTD actual cost', 'YearRealCost'],
   ];
-  const curIdx = months.findIndex(m => String(m.MonthEnd).trim() === state.currentMonthEnd);
   html += '<table class="review-table"><thead><tr><th>Item</th>';
-  months.forEach((m, i) => html += `<th class="${i === curIdx ? 'cur' : ''}">${fmt.monthShort(m.MonthEnd)}</th>`);
+  mEnds.forEach((me, i) => html += `<th class="${i === 2 ? 'cur' : ''}">${fmt.monthShort(me)}${i === 2 ? ' (current)' : ''}</th>`);
   html += '</tr></thead><tbody>';
   rows.forEach(([label, key]) => {
     html += `<tr><td class="rl">${label}</td>`;
-    months.forEach((m, i) => html += `<td class="rn ${i === curIdx ? 'cur' : ''}">${fmt.num(m[key])}</td>`);
+    monthRows.forEach((r, i) => html += `<td class="rn ${i === 2 ? 'cur' : ''}">${r ? fmt.num(r[key]) : '—'}</td>`);
     html += '</tr>';
   });
   html += '</tbody></table>';
 
-  const curLabel = state.currentMonthEnd ? fmt.monthShort(state.currentMonthEnd) : '—';
+  const curLabel = fmt.monthShort(cm);
   html += `<div class="review-desc"><div class="review-desc-h">Cost / income notes (${curLabel})</div>`
         + `<div class="review-desc-b">${state.amtDesc || '<i style="color:#a19f9d">(empty)</i>'}</div></div>`;
   html += `<div class="review-desc"><div class="review-desc-h">Warnings & actions (${curLabel})</div>`
